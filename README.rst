@@ -10,10 +10,10 @@ script plus any supporting files. Also add a (brief!) "README" file
 describing what the script does and any instructions for running it, and
 update the listing below.
 
-Index
------
+Contents
+--------
 
-`data_volume <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
+`data_volume <https://github.com/transientskp/scripts/tree/master/data_volume>`_
     Estimate the volume of visibilities produced for a given observation.
 
 `ms_diff <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
