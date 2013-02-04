@@ -18,3 +18,6 @@ Index
 
 `posangle_from_zenith <https://github.com/transientskp/scripts/tree/master/posangle_from_zenith>`_
     Calculate the position angle of an observation from the zenith.
+
+`uvw <https://github.com/transientskp/scripts/tree/master/uvw>`_
+    Calculate the UVW coordinates of a given baseline.
