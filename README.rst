@@ -13,6 +13,9 @@ update the listing below.
 Index
 -----
 
+`data_volume <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
+    Estimate the volume of visibilities produced for a given observation.
+
 `ms_diff <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
     Calculate the difference between two MeasurementSets.
 
