@@ -1,0 +1,8 @@
+search_radius=10
+flux_limit=0.5
+flux_ratio=1.2
+systematic_error=10
+PYSE_detection=8
+PYSE_analysis=3
+PYSE_grid=50
+PYSE_margin=100

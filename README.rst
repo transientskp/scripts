@@ -16,6 +16,9 @@ Contents
 `data_volume <https://github.com/transientskp/scripts/tree/master/data_volume>`_
     Estimate the volume of visibilities produced for a given observation.
 
+`find_flash <https://github.com/transientskp/scripts/tree/master/find_flash>`_
+    Finds new transient sources in fits images.
+
 `ms_diff <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
     Calculate the difference between two MeasurementSets.
 
