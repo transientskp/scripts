@@ -1,0 +1,21 @@
+2 scripts used to create and analyse simulated datasets.
+
+simulate.py
+This script creates a large number of simulated datasets using 20 LBA MSSS observations of the field of 3C295. All parameters are hardcoded into the script, so will require editing prior to use.
+A report on this script is available here:
+http://www.lofar.org/operations/lib/exe/fetch.php?media=tkp:trap_simulated_datasets.pdf
+Run by typing: python simulate.py
+
+TraP_autorun.py
+This will take all of the simulated datasets (of a particular lightcurve type) and conduct the following:
+1. Run TraP on all datasets (separately). Uses the CASA images output by simulate.py.
+2. Extract data from database for each dataset
+3. Compare to the expected skymodel
+4. Create plots of total flux and flux ratio for each dataset
+5. Create plots of transient parameters and conduct machine learning.
+All parameters are hardcoded into the script. Requirements:
+1. Needs running on heastro1
+2. Numpy, matplotlib, mlpy, etc (see imports at start of file)
+3. dump_transient_runcat.py (hardcoded to copy in my home directory, but available on github here: https://github.com/timstaley/tkp-user-config/blob/master/extras/dump_trans_runcat.py)
+A report will be available in the future. Takes ~3-4 days to run on one full set of simulated datasets.
+Run by typing: python TraP_autorun.py

@@ -25,5 +25,8 @@ Contents
 `posangle_from_zenith <https://github.com/transientskp/scripts/tree/master/posangle_from_zenith>`_
     Calculate the position angle of an observation from the zenith.
 
+`simulated_datasets <https://github.com/transientskp/scripts/tree/master/simulated_datasets>`_
+    Scripts used to create and analyse simulated datasets.
+
 `uvw <https://github.com/transientskp/scripts/tree/master/uvw>`_
     Calculate the UVW coordinates of a given baseline.
