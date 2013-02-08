@@ -49,3 +49,5 @@ for n in $list; do
     echo Source comparison script completed >> find_flash.log
     date  >> find_flash.log
 done
+
+python /home/rowlinson/scripts/assoc_trans.py -s ${numbers[2]}

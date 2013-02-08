@@ -25,6 +25,7 @@ import optparse
 
 
 def main(opts,args):
+    num_new=0
     vlss = args[0]
     pyse = opts.pyse
     ra_cent = opts.ra_cent
@@ -180,13 +181,13 @@ def main(opts,args):
                 new_flux_vlss_pyse.append(new_flux)
                 
                 text_file.write(str(catpos)+' '+str(x2)+' '+str(distcent)+' '+str(flux)+' '+str(new_flux)+' '+str(de_ruiter)+' '+str((posdif_old*3600))+' '+str((posdif_err*3600))+' '+str(nums2[10])+' '+str(nums2[11])+' '+str(nums2[12])+' '+str((nums2[13]).rstrip('\n'))+' '+str(intfluxrat)+' '+str(intfluxrat_err)+' '+str(pkfluxrat)+' '+str(pkfluxrat_err)+' '+str(new_intfluxrat)+' '+str(new_intfluxrat_err)+' '+str(new_pkfluxrat)+' '+str(new_pkfluxrat_err)+'\n')
-                if new_intfluxrat > flux_ratio:
+                if (new_intfluxrat-new_intfluxrat_err) > flux_ratio:
                     print('Possible flaring known source. Flux ratio between observed and skymodel = '+str(new_intfluxrat))
                     print('Position: '+str(catpos))
                     print('Catalogue flux: '+str(new_flux))
                     print('Observed flux: '+str(nums2[10]))
                     print('Image: '+output.split('.pdf')[0])
-                    variable_file.write(str(catpos)+' '+str(x2)+' '+str(distcent)+' '+str(flux)+' '+str(new_flux)+' '+str(de_ruiter)+' '+str((posdif_old*3600))+' '+str((posdif_err*3600))+' '+str(nums2[10])+' '+str(nums2[11])+' '+str(nums2[12])+' '+str((nums2[13]).rstrip('\n'))+' '+str(intfluxrat)+' '+str(intfluxrat_err)+' '+str(pkfluxrat)+' '+str(pkfluxrat_err)+' '+str(new_intfluxrat)+' '+str(new_intfluxrat_err)+' '+str(new_pkfluxrat)+' '+str(new_pkfluxrat_err)+' '+output.split('.pdf')[0]+'\n')
+                    variable_file.write(str(catpos)+' '+str(new_intfluxrat)+' '+str(new_intfluxrat_err)+' '+str(new_pkfluxrat)+' '+str(new_pkfluxrat_err)+' '+output.split('.pdf')[0]+'\n')
 
     for pos in positions:
         if pos not in associations:
@@ -209,6 +210,10 @@ def main(opts,args):
             print('Number of associated sources: '+str(n))
             print('Image = '+output.split('pdf')[0])
             multiple_assoc_file.write(str(pos1)+' '+str(n)+' '+output.split('.pdf')[0]+'\n')
+
+#    transients_file.close()
+#    multiple_assoc_file.close()
+#    variable_file.close()
 
 ############################################################################################################
 
@@ -373,7 +378,9 @@ def main(opts,args):
         savefig(pdf, format='pdf', orientation='portrait')
         matplotlib.pyplot.clf()
         pdf.close()
-        
+
+
+       
 ############################################################################################################
 
 opt = optparse.OptionParser()

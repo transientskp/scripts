@@ -16,5 +16,5 @@ PYSE_margin=0 # PYSE source extraction margin
 PYSE_radius=200 # PYSE source extration radius
 """
 
-Only works on CEP1, requires PYSE, gsm.py and find_flash_script.py
+Only works on CEP1, requires PYSE, gsm.py, find_flash_script.py and assoc_trans.py
 
