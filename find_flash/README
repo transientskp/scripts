@@ -18,3 +18,4 @@ PYSE_radius=200 # PYSE source extration radius
 
 Only works on CEP1, requires PYSE, gsm.py, find_flash_script.py and assoc_trans.py
 
+Can now also identify all unique transient sources and create a ds9 region file - recommend loading this in ds9 and overplotting the NVSS catalogue to confirm new sources.
