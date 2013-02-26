@@ -22,7 +22,7 @@ Contents
 `find_flash <https://github.com/transientskp/scripts/tree/master/find_flash>`_
     Finds new transient sources in fits images.
 
-`generate_voevent <https://github.com/transientskp/scripts/tree/master/generate_voevent`_
+`generate_voevent <https://github.com/transientskp/scripts/tree/master/generate_voevent>`_
     Generate a voevent alert packet from a given transient_id.
 
 `ms_diff <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
