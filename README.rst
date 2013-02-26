@@ -16,8 +16,14 @@ Contents
 `data_volume <https://github.com/transientskp/scripts/tree/master/data_volume>`_
     Estimate the volume of visibilities produced for a given observation.
 
+`dump_transients_to_csv <https://github.com/transientskp/scripts/tree/master/dump_transients_to_csv>`_
+    An example of how to work with MonetDB. Dumps transients to CSV tables.
+
 `find_flash <https://github.com/transientskp/scripts/tree/master/find_flash>`_
     Finds new transient sources in fits images.
+
+`generate_voevent <https://github.com/transientskp/scripts/tree/master/generate_voevent`_
+    Generate a voevent alert packet from a given transient_id.
 
 `ms_diff <https://github.com/transientskp/scripts/tree/master/ms_diff>`_
     Calculate the difference between two MeasurementSets.
