@@ -1,0 +1,5 @@
+flag_bad_stations.sh
+
+This is a standalone script which can take an input measurement set and flag the bad stations using the standard technique used as part of the imaging pipeline (using the tools described in: http://www.lofar.org/operations/lib/exe/fetch.php?media=msss:pandeymartinez-week9-v1p1.pdf). Input: file.MS Output: file.MS.flag
+
+bash flag_bad_stations.sh <MS>

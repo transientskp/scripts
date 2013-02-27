@@ -22,6 +22,9 @@ Contents
 `find_flash <https://github.com/transientskp/scripts/tree/master/find_flash>`_
     Finds new transient sources in fits images.
 
+`flag_bad_station_standalone <https://github.com/transientskp/scripts/tree/master/flag_bad_station_standalone>`_
+    A standalone script for automatically flagging bad stations in a measurement set.
+
 `generate_voevent <https://github.com/transientskp/scripts/tree/master/generate_voevent>`_
     Generate a voevent alert packet from a given transient_id.
 
