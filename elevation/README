@@ -1,0 +1,4 @@
+elevation.py
+
+A script to find the elevation of a given RA and Dec (in degrees) at a specific time (format: 2013-02-16T04:00:00) relative to the LOFAR superterp.
+Usage: elevation.py <RA> <Dec> <time>

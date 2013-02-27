@@ -19,8 +19,17 @@ Contents
 `dump_transients_to_csv <https://github.com/transientskp/scripts/tree/master/dump_transients_to_csv>`_
     An example of how to work with MonetDB. Dumps transients to CSV tables.
 
+`elevation <https://github.com/transientskp/scripts/tree/master/elevation>`_
+    Calculates the elevation relative to the Superterp for a given RA, Dec and observation time.
+
 `find_flash <https://github.com/transientskp/scripts/tree/master/find_flash>`_
     Finds new transient sources in fits images.
+
+`find_preprocessed_data  <https://github.com/transientskp/scripts/tree/master/find_preprocessed_data >`_
+    Finds the preprocessed data on CEP2 for a given obsid.
+
+`find_raw_data  <https://github.com/transientskp/scripts/tree/master/find_raw_data >`_
+    Finds the raw data on CEP2 for a given obsid.
 
 `flag_bad_station_standalone <https://github.com/transientskp/scripts/tree/master/flag_bad_station_standalone>`_
     A standalone script for automatically flagging bad stations in a measurement set.

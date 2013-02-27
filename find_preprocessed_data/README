@@ -1,0 +1,4 @@
+find_preprocessed_data.py
+
+This script will search all the locus nodes on CEP2 for all measurement sets which have been demixed, flagged and calibrated, outputting to screen the location of the data. This script needs running on CEP, lhn001.
+Usage: python find_preprocessed_data.py <obsid>
