@@ -1,0 +1,18 @@
+Usage: python TraP_source_overview.py <database> <dataset_id>
+
+Requirements:
+os, glob, sys, numpy, datetime, coords, math, matplotlib
+Access to TraP databases via dump_transient_runcat.py
+
+Instructions:
+
+1. If you are NOT using heastro1, you will also need the script dump_transient_runcat.py and you will need to edit line 94 to give the correct path to this script:
+   os.system('python ${your_path_here}/dump_transient_runcat.py --dbname='+database+' '+dataset_id)  
+2. Run TraP on your restored.corr images and force it to treat all sources as transient (in transientsearch.parset set all thresholds=0 and minpoints=1). Note the database you are using and the dataset_id for entry later.
+3. Create a folder to run this script in.
+4. You are now ready to run this script. Go to ${your_working_folder} and run: 
+   python TraP_source_overview.py <database> <dataset_id>
+   In the working folder, a number of png images are output which show an overview of your dataset. Further information about these plots will be given on the LOFAR wiki pages soon.
+   Additionally, it will write out all the data to a file called trans_data.txt
+
+Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl
