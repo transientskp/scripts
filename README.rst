@@ -49,5 +49,8 @@ Contents
 `TraP_QC_plots <https://github.com/transientskp/scripts/tree/master/TraP_QC_plots>`_
     Creates a variety of plots to give an overview of the quality of a given dataset for TraP.
 
+`TraP_source_overview <https://github.com/transientskp/scripts/tree/master/TraP_QC_plots>`_
+    Creates plots of the transient parameters for all sources in a dataset.
+
 `uvw <https://github.com/transientskp/scripts/tree/master/uvw>`_
     Calculate the UVW coordinates of a given baseline.
