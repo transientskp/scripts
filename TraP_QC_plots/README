@@ -1,0 +1,46 @@
+Usage: python TraP_QC_plots.py [options] <database> <dataset_id>
+
+Options:
+  -h, --help            show this help message and exit
+  -b MAXBL, --maxbl=MAXBL
+                        Maximum baseline used in imaging (km)
+  -d DETECTION, --detection=DETECTION
+                        PySE detection threshold
+  -a ANALYSIS, --analysis=ANALYSIS
+                        PYSE analysis threshold
+  -g GRID, --grid=GRID  PySE grid size
+  -r RADIUS, --radius=RADIUS
+                        PySE radius used for sourcefinding (pixels)
+  -l DEBLEND, --deblend=DEBLEND
+                        PySE deblend on/off
+  -t NTHRESH, --nthresh=NTHRESH
+                        PySE number of deblend thresholds
+  -s SYS_ERR, --sys_err=SYS_ERR
+                        Systematic position error (arcsec)
+  -c SEARCH_RADIUS, --search_radius=SEARCH_RADIUS
+                        Radius used in gsm.py to find skymodel (degrees)
+  -f FLUX_LIMIT, --flux_limit=FLUX_LIMIT
+                        Min flux used for analysis of flux ratios (Jy)
+  -m MAX_THEORETICAL_RATIO_CUT, --max_theoretical_ratio_cut=MAX_THEORETICAL_RATIO_CUT
+                        Cut on theoretical noise ratio to remove images where AWImager failed
+
+Requirements:
+gsm.py, pyse, os, glob, pyfits, sys, numpy, datetime, coords, math, matplotlib, optparse
+Access to TraP databases via dump_image_data.py
+
+Instructions:
+
+1. If you are NOT using heastro1, you will also need the script dump_image_data.py and you will need to edit line 51 to give the correct path to this script:
+    os.system('python ${your_path_here...}/dump_image_data.py --dbname='+database+' '+dataset_id)
+2. Run TraP on your restored.corr images and force it to reject all images (in quality_check.parset set "high_bound=1"). Note the database you are using and the dataset_id for entry later.
+3. Create a folder to run this script in.
+4. Create fits images of all the images you are using. I recommend using this command:
+   for i in *.restored.corr; do image2fits in=${image_location}/${i} out=${your_working_folder}/${i}.fits; done
+5. You are now ready to run this script. Go to ${your_working_folder} and run: 
+   python TraP_QC_plots.py [options] <database> <dataset_id>
+   The default parameters for all the options have been optimised for the RSM dataset, so check the values on lines 350-360 suit your requirements before running this script.
+   Output to screen at the end of the script are any extremely poor images which have been discounted from this analysis. These are likely to be cases where AWImager has failed to image the data.
+   In the working folder, a number of png images are output which show an overview of your dataset. Further information about these plots will be given on the LOFAR wiki pages soon.
+   Note this script will take a significant amount of time to run - so I recommend running it in a screen.
+
+Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl

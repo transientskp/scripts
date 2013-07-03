@@ -46,5 +46,8 @@ Contents
 `simulated_datasets <https://github.com/transientskp/scripts/tree/master/simulated_datasets>`_
     Scripts used to create and analyse simulated datasets.
 
+`TraP_QC_plots <https://github.com/transientskp/scripts/tree/master/TraP_QC_plots>`_
+    Creates a variety of plots to give an overview of the quality of a given dataset for TraP.
+
 `uvw <https://github.com/transientskp/scripts/tree/master/uvw>`_
     Calculate the UVW coordinates of a given baseline.
