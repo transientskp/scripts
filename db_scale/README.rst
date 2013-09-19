@@ -8,11 +8,11 @@ base sources with the goal to monitor long-term query behaviour.
                                                                   
 In the main function, you may specify the following:                 
                                                                   
-nbasesources  := the number of base sources                          
-basearea      := the area in which the base sources (and measurements) fall                                  
-nimages       := the number of images in which all base source is (re)measured                                        
-kappa         := parameter to dexcribe the compactness of the Fisher distribution                                         
-freqs         := the frequencies of an image                         
+* nbasesources  := the number of base sources                          
+* basearea      := the area in which the base sources (and measurements) fall                                  
+* nimages       := the number of images in which all base source is (re)measured                                        
+* kappa         := parameter to dexcribe the compactness of the Fisher distribution                                         
+* freqs         := the frequencies of an image                         
                                                                   
 This script generates a number of base sources within the specified  
 area. nimages specifies for how many images we follow the base       
