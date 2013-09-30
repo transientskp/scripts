@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """A specific example of how one might access the MonetDB database.
 
 Try running with flag '--help' for information on the command line options.

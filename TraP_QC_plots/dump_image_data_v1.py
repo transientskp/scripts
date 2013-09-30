@@ -10,7 +10,6 @@ import sys
 import os
 import tkp.config
 import tkp.db
-import ConfigParser
 import csv
 
 def main(dataset_id):
