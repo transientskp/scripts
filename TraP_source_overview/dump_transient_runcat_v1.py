@@ -33,7 +33,7 @@ def main(dataset_id):
       AND rf.runcat = rc.id
       AND rc.dataset = %s
     """
-    cursor = tkp.db.execute(transients_query, dataset_id)
+    cursor = tkp.db.execute(transients_query, (dataset_id,))
     transients = tkp.db.generic.get_db_rows_as_dicts(cursor)
     print "Found", len(transients), "transients"
 
@@ -62,7 +62,7 @@ def main(dataset_id):
       AND rc.dataset = %s
       ORDER BY rc.id
     """
-    cursor = tkp.db.execute(sources_query, dataset_id)
+    cursor = tkp.db.execute(sources_query, (dataset_id,))
     sources = tkp.db.generic.get_db_rows_as_dicts(cursor)
 
     print "Found", len(sources), "source datapoints"
@@ -85,7 +85,7 @@ def handle_args():
         parser.print_help()
         sys.exit(1)
     print "Grabbing data for dataset id:", args[0]
-    return options, args[0]
+    return options, int(args[0])
 
 def dump_list_of_dicts_to_csv(data, outfile):
     if data:
