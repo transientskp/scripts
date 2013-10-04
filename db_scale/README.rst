@@ -27,7 +27,7 @@ python time() functions. The measured query times are then written to log files.
 The log files are named accirding to the database version, machine name,
 local vs remote execution, and number of sources and images.
 
-When running this script, use the branch ``trap_queries`` at the ``bartscheers/tkp``
+When running this script, use the branch ``query_monitor`` at the ``bartscheers/tkp``
 repository.
 
 Requires database.
