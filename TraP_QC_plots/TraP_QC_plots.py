@@ -30,6 +30,10 @@ import optparse
 def main(opts,args):
     database=sys.argv[1]
     dataset_id=str(sys.argv[2])
+    release=str(sys.argv[3])
+    if release !='0' and release !='1':
+        print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
+        exit()
     maxbl = opts.maxbl
     detection = opts.detection
     analysis = opts.analysis
@@ -48,7 +52,19 @@ def main(opts,args):
     VirA=C.Position((187.705930,12.391123))
 
     # Create the noise plots
-    os.system('python /home/antoniar/scripts/dump_image_data.py --dbname='+database+' '+dataset_id)
+    if release == '0':
+        import dump_image_data_v0
+        from dump_image_data_v0 import dump_images
+        dump_images(database,dataset_id)
+    elif release == '1':
+        import dump_image_data_v1
+        from dump_image_data_v1 import dump_images
+        dump_images(database,dataset_id)
+    else:
+        print 'ERROR in release number'
+        exit()
+    
+    #os.system('python /home/antoniar/scripts/dump_image_data.py --dbname='+database+' '+dataset_id)
 
     image_info=[]
     image_data=open('ds_'+dataset_id+'_images.csv','r')
@@ -360,7 +376,7 @@ opt.add_option('-m','--max_theoretical_ratio_cut',help='Cut on theoretical noise
 
 opts,args = opt.parse_args()
 
-if len(sys.argv) != 3:
-    print 'python TraP_QC_plots.py [arguments] <database> <dataset_id>'
+if len(sys.argv) != 4:
+    print 'python TraP_QC_plots.py [arguments] <database> <dataset_id> <version>'
 else:
     main(opts,args)

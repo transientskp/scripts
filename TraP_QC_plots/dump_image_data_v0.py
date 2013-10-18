@@ -12,9 +12,9 @@ from tkp.database import DataBase
 import tkp.database.utils as dbu
 import csv
 
-def main(dbname, dataset_id):
+def dump_images(dbname, dataset_id):
     db = DataBase(name=dbname, user=dbname, password=dbname)
-
+    
     sources_query = """\
     SELECT  im.id
             ,im.freq_eff
@@ -40,7 +40,7 @@ def main(dbname, dataset_id):
 
     print "Found", len(sources), "images"
 
-    outfile_prefix = './ds_' + str(ds_id) + '_'
+    outfile_prefix = './ds_' + str(dataset_id) + '_'
     dump_list_of_dicts_to_csv(sources, outfile_prefix + 'images.csv')
 
     return 0
@@ -81,6 +81,6 @@ def dump_list_of_dicts_to_csv(data, outfile):
             dw.writerows(data)
 
 
-if __name__ == "__main__":
-    options, ds_id = handle_args()
-    sys.exit(main(options.dbname, ds_id))
+#if __name__ == "__main__":
+#    options, ds_id = handle_args()
+#    sys.exit(main(options.dbname, ds_id))

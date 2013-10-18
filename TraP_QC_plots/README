@@ -30,8 +30,7 @@ Access to TraP databases via dump_image_data.py
 
 Instructions:
 
-1. If you are NOT using heastro1, you will also need the script dump_image_data.py and you will need to edit line 51 to give the correct path to this script:
-    os.system('python ${your_path_here...}/dump_image_data.py --dbname='+database+' '+dataset_id)
+1. If you are NOT using heastro1, you will need to edit the script dump_image_data_v1.py to give the correct path to your dataset.
 2. Run TraP on your restored.corr images and force it to reject all images (in quality_check.parset set "high_bound=1"). Note the database you are using and the dataset_id for entry later.
 3. Create a folder to run this script in.
 4. Create fits images of all the images you are using. I recommend using this command:
