@@ -13,10 +13,11 @@ import tkp.config
 import tkp.db
 import csv
 
-def main(dataset_id):
-    config_parset = tkp.config.initialize_pipeline_config(
-                             os.path.join(os.getcwd(), "pipeline.cfg"),
-                             job_name="Script: Dump transient runcat")
+def dump_trans(dbname, dataset_id, engine='monetdb', host='heastrodb', port=52000):
+    tkp.db.Database(
+        database=dbname, user=dbname, password=dbname,
+        engine=engine, host=host, port=port
+    )
 
     #Note it is possible to query the database using the python routines 
     #in tkp.database.utils.generic, without any knowledge of SQL.
@@ -67,7 +68,7 @@ def main(dataset_id):
 
     print "Found", len(sources), "source datapoints"
 
-    outfile_prefix = './ds_' + str(ds_id) + '_'
+    outfile_prefix = './ds_' + str(dataset_id) + '_'
     dump_list_of_dicts_to_csv(transients, outfile_prefix + 'transients.csv')
     dump_list_of_dicts_to_csv(sources, outfile_prefix + 'sources.csv')
 
@@ -95,6 +96,6 @@ def dump_list_of_dicts_to_csv(data, outfile):
             dw.writerows(data)
 
 
-if __name__ == "__main__":
-    options, ds_id = handle_args()
-    sys.exit(main(ds_id))
+#if __name__ == "__main__":
+#    options, ds_id = handle_args()
+#    sys.exit(main(ds_id))

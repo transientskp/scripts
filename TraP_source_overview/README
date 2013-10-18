@@ -14,6 +14,6 @@ Instructions:
    In the working folder, a number of png images are output which show an overview of your dataset. Further information about these plots will be given on the LOFAR wiki pages soon.
    Additionally, it will write out all the data to a file called trans_data.txt
 
-Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl
+If you are not running this script on heastro1, you will need to edit dump_transient_runcat_v1.py to point to your database.
 
-WARNING - This script currently does not work for Release 1 databases. This will be corrected in the near future.
+Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl
