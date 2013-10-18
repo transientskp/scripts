@@ -12,13 +12,11 @@ import tkp.config
 import tkp.db
 import csv
 
-def main(dataset_id):
-
-    config_parset = tkp.config.initialize_pipeline_config(
-                             os.path.join(os.getcwd(), "pipeline.cfg"),
-                             job_name="Script: Dump image data")
-
-    db_config = tkp.config.database_config(config_parset, apply=True)
+def dump_images(dbname,dataset_id, engine='monetdb', host='heastrodb', port=52000):
+    tkp.db.Database(
+        database=dbname, user=dbname, password=dbname,
+        engine=engine, host=host, port=port
+    )
 
     sources_query = """\
     SELECT  im.id
@@ -43,7 +41,7 @@ def main(dataset_id):
 
     print "Found", len(sources), "images"
 
-    outfile_prefix = './ds_' + str(ds_id) + '_'
+    outfile_prefix = './ds_' + str(dataset_id) + '_'
     dump_list_of_dicts_to_csv(sources, outfile_prefix + 'images.csv')
 
     return 0
@@ -72,6 +70,6 @@ def dump_list_of_dicts_to_csv(data, outfile):
             dw.writerows(data)
 
 
-if __name__ == "__main__":
-    options, ds_id = handle_args()
-    sys.exit(main(ds_id))
+#if __name__ == "__main__":
+#    options, ds_id = handle_args()
+#    sys.exit(main(ds_id))
