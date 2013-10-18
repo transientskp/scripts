@@ -12,7 +12,7 @@ from tkp.database import DataBase
 import tkp.database.utils as dbu
 import csv
 
-def main(dbname, dataset_id):
+def dump_trans(dbname, dataset_id):
     db = DataBase(name=dbname, user=dbname, password=dbname)
 
     #Note it is possible to query the database using the python routines 
@@ -70,7 +70,7 @@ def main(dbname, dataset_id):
 
     print "Found", len(sources), "source datapoints"
 
-    outfile_prefix = './ds_' + str(ds_id) + '_'
+    outfile_prefix = './ds_' + str(dataset_id) + '_'
     dump_list_of_dicts_to_csv(transients, outfile_prefix + 'transients.csv')
     dump_list_of_dicts_to_csv(sources, outfile_prefix + 'sources.csv')
 
@@ -111,7 +111,6 @@ def dump_list_of_dicts_to_csv(data, outfile):
 #            dw.writeheader()
             dw.writerows(data)
 
-
-if __name__ == "__main__":
-    options, ds_id = handle_args()
-    sys.exit(main(options.dbname, ds_id))
+#if __name__ == "__main__":
+#    options, ds_id = handle_args()
+#    sys.exit(main(options.dbname, ds_id))
