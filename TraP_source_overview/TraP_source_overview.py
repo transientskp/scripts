@@ -25,9 +25,6 @@ release = str(sys.argv[3])
 if release!='0' and release!='1':
     print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
     exit()
-if release=='1':
-    print 'ERROR - not currently working for Release 1 databases'
-    exit()
 
 # Setting up the general lists and dictionaries needed
 trans_runcat=[]
@@ -100,15 +97,17 @@ total_time_diff={}
 if release == '0':
     import dump_transient_runcat_v0
     from dump_transient_runcat_v0 import dump_trans
+    dump_trans(database,dataset_id)
 elif release == '1':
     import dump_transient_runcat_v1
     from dump_transient_runcat_v1 import dump_trans
+    dump_trans(database,dataset_id)
 else:
     print 'ERROR in release number'
     exit()
 
 
-dump_trans(database,dataset_id)
+
 
 ### Reading in the data from the output files of above script
 transients=[]
