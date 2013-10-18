@@ -15,11 +15,19 @@ from datetime import datetime
 
 ###################### INITIAL SETUP STEPS ######################
 
-if len(sys.argv) != 3:
-    print 'python TraP_source_overview.py <database> <dataset_id>'
+if len(sys.argv) != 4:
+    print 'python TraP_source_overview.py <database> <dataset_id> <release>'
     exit()
 database = sys.argv[1]
 dataset_id = str(sys.argv[2])
+release = str(sys.argv[3])
+
+if release!='0' and release!='1':
+    print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
+    exit()
+if release=='1':
+    print 'ERROR - not currently working for Release 1 databases'
+    exit()
 
 # Setting up the general lists and dictionaries needed
 trans_runcat=[]
@@ -88,7 +96,20 @@ total_flux_ratio_err={}
 total_time_diff={}
  
 ### Getting the data from the Database - Thanks Tim!
-os.system('python /home/antoniar/scripts/dump_transient_runcat.py --dbname='+database+' '+dataset_id)
+#os.system('python /home/antoniar/scripts/dump_transient_runcat.py --dbname='+database+' '+dataset_id)
+if release == '0':
+    import dump_transient_runcat_v0
+    from dump_transient_runcat_v0 import dump_trans
+elif release == '1':
+    import dump_transient_runcat_v1
+    from dump_transient_runcat_v1 import dump_trans
+else:
+    print 'ERROR in release number'
+    exit()
+
+
+dump_trans(database,dataset_id)
+
 ### Reading in the data from the output files of above script
 transients=[]
 data=open('ds_'+dataset_id+'_transients.csv','r')
