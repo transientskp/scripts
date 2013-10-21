@@ -2,7 +2,7 @@
 import datetime
 import time
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os
@@ -11,16 +11,17 @@ import numpy as np
 import math
 import sys
 from datetime import datetime
-
+from scipy.stats import norm
 
 ###################### INITIAL SETUP STEPS ######################
 
-if len(sys.argv) != 4:
-    print 'python TraP_source_overview.py <database> <dataset_id> <release>'
+if len(sys.argv) != 5:
+    print 'python TraP_source_overview.py <database> <dataset_id> <release> <sigma>'
     exit()
 database = sys.argv[1]
 dataset_id = str(sys.argv[2])
 release = str(sys.argv[3])
+sigma = float(sys.argv[4])
 
 if release!='0' and release!='1':
     print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
@@ -30,11 +31,27 @@ if release!='0' and release!='1':
 trans_runcat=[]
 trans_data=[]
 
-
 ###################### DEFINE SUBROUTINES ######################
 
+def plothist(x, name,filename,sigma):
+    param=norm.fit(x)
+    range_x=np.linspace(min(x),max(x),1000)
+    fit=norm.pdf(range_x,loc=param[0],scale=param[1])
+    plt.plot(range_x,fit, 'r-')
+    plt.hist(x,bins=100,normed=1,histtype='stepfilled')
+    plt.semilogy()
+    sigcut = param[1]*sigma+param[0]
+    plt.axvline(x=sigcut, linewidth=2, color='k', linestyle='--')
+    plt.title('%s mean: %.3f sd: %.3f' % (name, param[0], param[1]))
+    plt.text((sigcut-(0.3*param[1])), 1, r'%.1f $\sigma$: %.3f' % (sigma,sigcut), rotation=90)
+    plt.xlabel(name)
+    plt.yscale('log')
+    plt.axis([-2,max(x),5e-3,2])
+    plt.savefig(filename+'_1gauss.png')
+    plt.close()
+    return sigcut
 
-def plotfig(trans_data, a, b, xlabel, ylabel, plotname):
+def plotfig(trans_data, a, b, xlabel, ylabel, plotname,sigcut_etanu,sigcut_Vnu):
     print('plotting figure: '+plotname)
     plt.figure()
     x1=[]
@@ -81,6 +98,14 @@ def plotfig(trans_data, a, b, xlabel, ylabel, plotname):
         plt.xscale('log')
     if b == 1 or b == 3:
         plt.yscale('log')
+    if a == 1:
+        plt.axvline(x=sigcut_etanu, linewidth=2, color='k', linestyle='--')
+    if a == 3:
+        plt.axvline(x=sigcut_Vnu, linewidth=2, color='k', linestyle='--')
+    if b == 1:
+        plt.axhline(y=sigcut_etanu, linewidth=2, color='k', linestyle='--')
+    if b == 3:
+        plt.axhline(y=sigcut_Vnu, linewidth=2, color='k', linestyle='--')
     plt.axis([xmin,xmax,ymin,ymax])
     plt.ylabel(ylabel)
     plt.savefig('transients_'+plotname+'.png')
@@ -93,7 +118,6 @@ total_flux_ratio_err={}
 total_time_diff={}
  
 ### Getting the data from the Database - Thanks Tim!
-#os.system('python /home/antoniar/scripts/dump_transient_runcat.py --dbname='+database+' '+dataset_id)
 if release == '0':
     import dump_transient_runcat_v0
     from dump_transient_runcat_v0 import dump_trans
@@ -105,9 +129,6 @@ elif release == '1':
 else:
     print 'ERROR in release number'
     exit()
-
-
-
 
 ### Reading in the data from the output files of above script
 transients=[]
@@ -160,15 +181,21 @@ for keys in new_source.keys():
 
 label={1: r'$\eta_\nu$', 2: 'Significance', 3: r'V$_\nu$', 4: 'Max Flux (Jy)', 5: 'Max Flux Ratio (extracted/average)'}
 plotname={1: 'etanu', 2: 'signif', 3: 'Vv', 4: 'flux', 5: 'flxrat'}
-plotfig(trans_data, 4, 1, label[4], label[1], plotname[4]+'_'+plotname[1])
-plotfig(trans_data, 4, 3, label[4], label[3], plotname[4]+'_'+plotname[3])
-plotfig(trans_data, 5, 1, label[5], label[1], plotname[5]+'_'+plotname[1])
-plotfig(trans_data, 5, 3, label[5], label[3], plotname[5]+'_'+plotname[3])
-plotfig(trans_data, 1, 3, label[1], label[3], plotname[1]+'_'+plotname[3])
-plotfig(trans_data, 4, 2, label[4], label[2], plotname[4]+'_'+plotname[2])
-plotfig(trans_data, 5, 2, label[5], label[2], plotname[5]+'_'+plotname[2])
-plotfig(trans_data, 1, 2, label[1], label[2], plotname[1]+'_'+plotname[2])
-plotfig(trans_data, 3, 2, label[3], label[2], plotname[3]+'_'+plotname[2])
+
+data=[np.log10(x[1]) for x in trans_data if x[1]>0]
+sigcut_etanu=10.**(plothist(data,r'log($\eta_\nu$)','etanu_hist',sigma))
+data=[np.log10(x[3]) for x in trans_data if x[3]>0]
+sigcut_Vnu=10.**(plothist(data,r'log(V$_\nu$)','Vnu_hist',sigma))
+
+plotfig(trans_data, 4, 1, label[4], label[1], plotname[4]+'_'+plotname[1],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 4, 3, label[4], label[3], plotname[4]+'_'+plotname[3],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 5, 1, label[5], label[1], plotname[5]+'_'+plotname[1],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 5, 3, label[5], label[3], plotname[5]+'_'+plotname[3],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 1, 3, label[1], label[3], plotname[1]+'_'+plotname[3],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 4, 2, label[4], label[2], plotname[4]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 5, 2, label[5], label[2], plotname[5]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 1, 2, label[1], label[2], plotname[1]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
+plotfig(trans_data, 3, 2, label[3], label[2], plotname[3]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
 
 
 output3 = open('trans_data.txt','w')
