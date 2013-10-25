@@ -28,9 +28,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 import optparse
 
 def main(opts,args):
-    database=sys.argv[1]
-    dataset_id=str(sys.argv[2])
-    release=str(sys.argv[3])
+    database=args[0]
+    dataset_id=str(args[1])
+    release=str(args[2])
     if release !='0' and release !='1':
         print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
         exit()
@@ -321,7 +321,9 @@ def plotfig3(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
     start_time = min(trans_data[x][0] for x in range(len(trans_data)))
     for x in range(len(trans_data)):
         if trans_data[x][1] == freq:
-            dt=str(abs(trans_data[x][0]-start_time)).split(':')
+            dt=str(abs(trans_data[x][a]-start_time)).split(':')
+            if "day" in dt[0]:
+                dt[0]=dt.days*24.
             dt=float(dt[0])+float(dt[1])/60+float(dt[2])/3600
             print dt
             plt.plot(dt, [trans_data[x][2]],'r.')
@@ -333,7 +335,7 @@ def plotfig3(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
     plt.xlabel(xlabel)
     plt.annotate('Mean: '+str(round(avg,3)), xy=(24.3, avg*1.1),  xycoords='data', color='b')
     plt.annotate('RMS: '+str(round(rms,3)), xy=(24.3, (rms+avg)*1.1),  xycoords='data', color='b')
-    plt.axis([-1,30,ymin,ymax])
+    plt.axis([-1,max(dt)+1,ymin,ymax])
     plt.ylabel(ylabel)
     plt.title(title)
     plt.savefig(plotname+'.png')
@@ -376,7 +378,7 @@ opt.add_option('-m','--max_theoretical_ratio_cut',help='Cut on theoretical noise
 
 opts,args = opt.parse_args()
 
-if len(sys.argv) != 4:
+if len(sys.argv) < 4:
     print 'python TraP_QC_plots.py [arguments] <database> <dataset_id> <version>'
 else:
     main(opts,args)
