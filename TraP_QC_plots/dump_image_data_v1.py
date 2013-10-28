@@ -23,6 +23,8 @@ def dump_images(dbname,dataset_id, engine='monetdb', host='heastrodb', port=5200
             ,im.freq_eff
             ,im.url
             ,im.taustart_ts
+            ,im.rb_smaj
+            ,im.rb_smin
             ,sr.centre_ra
             ,sr.centre_decl
             ,r.comment
