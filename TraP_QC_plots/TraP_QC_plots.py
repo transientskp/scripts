@@ -28,6 +28,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import optparse
 
 def main(opts,args):
+    max_flx_rat_cutoff=1e3
+    min_sep=0.
     database=args[0]
     dataset_id=str(args[1])
     release=str(args[2])
@@ -63,8 +65,6 @@ def main(opts,args):
     else:
         print 'ERROR in release number'
         exit()
-    
-    #os.system('python /home/antoniar/scripts/dump_image_data.py --dbname='+database+' '+dataset_id)
 
     image_info=[]
     image_data=open('ds_'+dataset_id+'_images.csv','r')
@@ -74,13 +74,14 @@ def main(opts,args):
     failed_images=[]
     for lines in list:
         row=lines.split(',')
-        image=row[6].split('/')[6].rstrip()+'.fits'
-        date=datetime.strptime(row[5].strip(),'%Y-%m-%d %H:%M:%S')
-        freq=float(row[3].strip())/1e6
+        image=row[8].split('/')[-1].rstrip()+'.fits'
+        date=datetime.strptime(row[7].strip(),'%Y-%m-%d %H:%M:%S')
+        freq=int((float(row[3].strip())/1e6) + 0.5)
         if freq not in frequencies:
             frequencies.append(freq)
-        beam = 206265*((300/freq)/(1000*maxbl))
-        confusion=29.0E-6*math.pow(beam,1.54)*math.pow((freq/74.0),-0.7)
+        ellipticity=float(row[5])/float(row[6])
+        beam = 206265*((300/float(freq))/(1000*maxbl))
+        confusion=29.0E-6*math.pow(beam,1.54)*math.pow((float(freq)/74.0),-0.7)
         theoretical=float(row[2].split(' ')[8].split('(')[1].split(')')[0].strip())
         ratio=float(row[2].split(' ')[4].strip())
         rms=theoretical*ratio
@@ -89,27 +90,37 @@ def main(opts,args):
         posdif_CygA=float(str(CygA.angsep(pc)).split(' degrees')[0])
         posdif_VirA=float(str(VirA.angsep(pc)).split(' degrees')[0])
         if rms/theoretical < max_theoretical_ratio_cut:
-            image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,confusion,rms/confusion,posdif_CasA,posdif_CygA,posdif_VirA,image])
+            image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,confusion,rms/confusion,posdif_CasA,posdif_CygA,posdif_VirA,image,ellipticity])
         else:
-            failed_images.append(row[6].split('/')[6].rstrip())
+            failed_images.append(row[8].split('/')[-1].rstrip())
 
     freq='all'
     rms=[image_info[n][4] for n in range(len(image_info))]
     avg_rms=(sum(rms)/len(rms))
     rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
     plotfig(image_info, 2, 4, 'Observation Time (hours)', 'RMS (Jy/beam)', 'rms',avg_rms,rms_rms,'Frequency: '+str(freq))
-
+    plotfig4(image_info, 13, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy/beam)', 'rms_ellipticity',avg_rms,rms_rms,'Frequency: '+str(freq))
+    
     rms_ratio=[image_info[n][6] for n in range(len(image_info))]
     avg_rms_ratio=(sum(rms_ratio)/len(rms_ratio))
     rms_rms_ratio=math.sqrt((sum(n*n-(avg_rms_ratio*avg_rms_ratio) for n in rms_ratio))/len(rms_ratio))
     plotfig(image_info, 2, 6, 'Observation Time (hours)', 'RMS/Theoretical', 'theoretical',avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(freq))
-
+    plotfig4(image_info, 13, 6, 'Ellipticity (Bmaj/Bmin)', 'RMS/Theoretical', 'theoretical_ellipticity',avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(freq))
+    rms_ratio_threshold=avg_rms_ratio+rms_rms_ratio
+ 
     rms_ratio2=[image_info[n][8] for n in range(len(image_info))]
     avg_rms_ratio2=(sum(rms_ratio2)/len(rms_ratio2))
     rms_rms_ratio2=math.sqrt((sum(n*n-(avg_rms_ratio2*avg_rms_ratio2) for n in rms_ratio2))/len(rms_ratio2))
     plotfig(image_info, 2, 8, 'Observation Time (hours)', 'RMS/Confusion', 'confusion',avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(freq))
+    plotfig4(image_info, 13, 8, 'Ellipticity (Bmaj/Bmin)', 'RMS/Confusion', 'confusion_ellipticity',avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(freq))
+
+    rms2=[image_info[x][13] for x in range(len(image_info))]
+    avg_rms2=(sum(rms2)/len(rms2))
+    rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
+    ellipticity_threshold=avg_rms2+rms_rms2
 
     for ateam in ['CasA', 'CygA', 'VirA']:
+
         if ateam == 'CasA':
             a=9
         elif ateam == 'CygA':
@@ -117,20 +128,28 @@ def main(opts,args):
         elif ateam == 'VirA':
             a=11
         plotfig2(image_info, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(freq),avg_rms,rms_rms,ateam+' - Frequency: '+str(freq))
+        plotfig2(image_info, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(freq),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(freq))
 
     for freq in frequencies:
-        rms=[image_info[n][4] for n in range(len(image_info)) if image_info[n][3]==freq]
+        image_info2=[image_info[n] for n in range(len(image_info)) if int(image_info[n][3]+0.5)==freq]
+        rms=[image_info[n][4] for n in range(len(image_info)) if int(image_info[n][3]+0.5)==freq]
         avg_rms=(sum(rms)/len(rms))
         rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
-        plotfig(image_info, 2, 4, 'Observation Time (hours)', 'RMS (Jy/beam)', 'rms_'+str(int(freq)),avg_rms,rms_rms,'Frequency: '+str(int(freq)))
-        rms_ratio=[image_info[n][6] for n in range(len(image_info)) if image_info[n][3]==freq]
+        plotfig(image_info2, 2, 4, 'Observation Time (hours)', 'RMS (Jy/beam)', 'rms_'+str(int(freq+0.5)),avg_rms,rms_rms,'Frequency: '+str(int(freq+0.5)))
+        plotfig4(image_info2, 13, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy/beam)', 'rms_ellipticity_'+str(int(freq+0.5)),avg_rms,rms_rms,'Frequency: '+str(int(freq+0.5)))
+        rms_ratio=[image_info[n][6] for n in range(len(image_info)) if int(image_info[n][3]+0.5)==freq]
         avg_rms_ratio=(sum(rms_ratio)/len(rms_ratio))
         rms_rms_ratio=math.sqrt((sum(n*n-(avg_rms_ratio*avg_rms_ratio) for n in rms_ratio))/len(rms_ratio))
-        plotfig(image_info, 2, 6, 'Observation Time (hours)', 'RMS/Theoretical', 'theoretical_'+str(int(freq)),avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(int(freq)))
-        rms_ratio2=[image_info[n][8] for n in range(len(image_info)) if image_info[n][3]==freq]
+        plotfig(image_info2, 2, 6, 'Observation Time (hours)', 'RMS/Theoretical', 'theoretical_'+str(int(freq+0.5)),avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(int(freq+0.5)))
+        plotfig4(image_info2, 13, 6, 'Ellipticity (Bmaj/Bmin)', 'RMS/Theoretical', 'theoretical_ellipticity_'+str(int(freq+0.5)),avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(int(freq+0.5)))
+        rms_ratio2=[image_info[n][8] for n in range(len(image_info)) if int(image_info[n][3]+0.5)==freq]
         avg_rms_ratio2=(sum(rms_ratio2)/len(rms_ratio2))
         rms_rms_ratio2=math.sqrt((sum(n*n-(avg_rms_ratio2*avg_rms_ratio2) for n in rms_ratio2))/len(rms_ratio2))
-        plotfig(image_info, 2, 8, 'Observation Time (hours)', 'RMS/Confusion', 'confusion_'+str(int(freq)),avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(int(freq)))
+        plotfig(image_info2, 2, 8, 'Observation Time (hours)', 'RMS/Confusion', 'confusion_'+str(int(freq+0.5)),avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(int(freq+0.5)))
+        plotfig4(image_info2, 13, 8, 'Ellipticity (Bmaj/Bmin)', 'RMS/Confusion', 'confusion_ellipticity_'+str(int(freq+0.5)),avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(int(freq+0.5)))
+        rms2=[image_info[n][13] for n in range(len(image_info)) if int(image_info[n][3]+0.5)==freq]
+        avg_rms2=(sum(rms2)/len(rms2))
+        rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
         for ateam in ['CasA', 'CygA', 'VirA']:
             if ateam == 'CasA':
                 a=9
@@ -138,13 +157,41 @@ def main(opts,args):
                 a=10
             elif ateam == 'VirA':
                 a=11
-            plotfig2(image_info, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(int(freq)),avg_rms,rms_rms,ateam+' - Frequency: '+str(int(freq)))
+            plotfig2(image_info2, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(int(freq+0.5)),avg_rms,rms_rms,ateam+' - Frequency: '+str(int(freq+0.5)))
+            plotfig2(image_info2, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(int(freq+0.5)),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(int(freq+0.5)))
+            
+    print 'Clipped image properties'
+    clipped_image_info=[image_info[n] for n in range(len(image_info)) if image_info[n][6] < rms_ratio_threshold if image_info[n][13] < ellipticity_threshold if image_info[n][9]>min_sep if image_info[n][10]>min_sep if image_info[n][11]>min_sep]
+    print 'Number of images remaining: '+str(len(clipped_image_info))
+    freq='all'
+    rms=[clipped_image_info[n][4] for n in range(len(clipped_image_info))]
+    avg_rms=(sum(rms)/len(rms))
+    rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
+    plotfig(clipped_image_info, 2, 4, 'Observation Time (hours)', 'RMS (Jy/beam)', 'rms_clipped',avg_rms,rms_rms,'Frequency: '+str(freq))
+    plotfig4(clipped_image_info, 13, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy/beam)', 'rms_ellipticity_clipped',avg_rms,rms_rms,'Frequency: '+str(freq))
+    
+    rms_ratio=[clipped_image_info[n][6] for n in range(len(clipped_image_info))]
+    avg_rms_ratio=(sum(rms_ratio)/len(rms_ratio))
+    rms_rms_ratio=math.sqrt((sum(n*n-(avg_rms_ratio*avg_rms_ratio) for n in rms_ratio))/len(rms_ratio))
+    plotfig(clipped_image_info, 2, 6, 'Observation Time (hours)', 'RMS/Theoretical', 'theoretical_clipped',avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(freq))
+    plotfig4(clipped_image_info, 13, 6, 'Ellipticity (Bmaj/Bmin)', 'RMS/Theoretical', 'theoretical_ellipticity_clipped',avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(freq))
+    rms_ratio_threshold=avg_rms_ratio+rms_rms_ratio
+
+    rms_ratio2=[clipped_image_info[n][8] for n in range(len(clipped_image_info))]
+    avg_rms_ratio2=(sum(rms_ratio2)/len(rms_ratio2))
+    rms_rms_ratio2=math.sqrt((sum(n*n-(avg_rms_ratio2*avg_rms_ratio2) for n in rms_ratio2))/len(rms_ratio2))
+    plotfig(clipped_image_info, 2, 8, 'Observation Time (hours)', 'RMS/Confusion', 'confusion_clipped',avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(freq))
+    plotfig4(clipped_image_info, 13, 8, 'Ellipticity (Bmaj/Bmin)', 'RMS/Confusion', 'confusion_ellipticity_clipped',avg_rms_ratio2,rms_rms_ratio2,'Frequency: '+str(freq))
+    
+
+
 
     # Flux plots
 
     fitsfiles=glob.glob("*.fits")
     frequencies=[]
     avg_int_flx_rat=[]
+    avg_int_flx_rat_clipped=[]
     for fits in fitsfiles:
         print 'Analysing image: '+fits
         hdulist = pyfits.open(fits)
@@ -152,7 +199,7 @@ def main(opts,args):
         dec = hdulist[0].header['CRVAL2']
         bmaj = hdulist[0].header['BMAJ']
         bmin = hdulist[0].header['BMIN']
-        restfrq = hdulist[0].header['RESTFRQ']
+        restfrq = int((hdulist[0].header['RESTFRQ']/1e6)+0.5)
         if restfrq not in frequencies:
             frequencies.append(restfrq)
         date = hdulist[0].header['DATE-OBS']
@@ -166,18 +213,50 @@ def main(opts,args):
         for lines in image_info:
             if fits == lines[12]:
                 rms2=lines[4]
-        num_lines = sum(1 for line in open(fits.split('.fits')[0]+'.csv'))
-        if num_lines > 1:
-            avg_int_flx_rat.append([date, restfrq, find_avg_int_flx_rat(fits+'.sky',flux_limit,restfrq,fits.split('.fits')[0]+'.csv'),rms2])
-
+                ellipticity2=lines[13]
+                num_lines = sum(1 for line in open(fits.split('.fits')[0]+'.csv'))
+                if num_lines > 1:
+                    flx=find_avg_int_flx_rat(fits+'.sky',flux_limit,restfrq,fits.split('.fits')[0]+'.csv')
+                    if flx<max_flx_rat_cutoff:
+                        avg_int_flx_rat.append([date, restfrq, flx,rms2,ellipticity2])
+        for lines in clipped_image_info:
+            if fits == lines[12]:
+                rms2=lines[4]
+                ellipticity2=lines[13]
+                num_lines = sum(1 for line in open(fits.split('.fits')[0]+'.csv'))
+                if num_lines > 1:
+                    flx=find_avg_int_flx_rat(fits+'.sky',flux_limit,restfrq,fits.split('.fits')[0]+'.csv')
+                    if flx<max_flx_rat_cutoff:
+                        avg_int_flx_rat_clipped.append([date, restfrq, find_avg_int_flx_rat(fits+'.sky',flux_limit,restfrq,fits.split('.fits')[0]+'.csv'),rms2,ellipticity2])
+    
     for freq in frequencies:
+        avg_int_flx_rat2=[avg_int_flx_rat[n] for n in range(len(avg_int_flx_rat)) if avg_int_flx_rat[n][1]==freq]
         rms=[avg_int_flx_rat[n][2] for n in range(len(avg_int_flx_rat)) if avg_int_flx_rat[n][1]==freq]
         avg_rms=(sum(rms)/len(rms))
         rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
         rms2=[avg_int_flx_rat[n][3] for n in range(len(avg_int_flx_rat)) if avg_int_flx_rat[n][1]==freq]
         avg_rms2=(sum(rms2)/len(rms2))
         rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
-        plotfig3(avg_int_flx_rat, 'Observation Time (hours)', 'Average Flux Ratio (Observed/Correct_sky)', 'flxrat_'+str(int(freq/1e6)),avg_rms,rms_rms,'Frequency: '+str(int(freq/1e6)), freq,avg_rms2,rms_rms2)
+        ellipticity2=[avg_int_flx_rat[n][4] for n in range(len(avg_int_flx_rat)) if avg_int_flx_rat[n][1]==freq]
+        avg_ellipticity2=(sum(ellipticity2)/len(ellipticity2))
+        rms_ellipticity2= math.sqrt((sum(n*n-(avg_ellipticity2*avg_ellipticity2) for n in ellipticity2))/len(ellipticity2))
+        plotfig3(avg_int_flx_rat2, 'Observation Time (hours)', 'Average Flux Ratio (Observed/Correct_sky)', 'flxrat_'+str(int(freq)),avg_rms,rms_rms,'Frequency: '+str(int(freq)), freq,avg_rms2,rms_rms2)
+        plotfig5(avg_int_flx_rat2, 'Ellipticity (Bmaj/Bmin)', 'Average Flux Ratio (Observed/Correct_sky)', 'flxrat_'+str(int(freq)),avg_rms,rms_rms,'Frequency: '+str(int(freq)), freq,avg_ellipticity2,rms_ellipticity2)
+        avg_int_flx_rat2_clipped=[avg_int_flx_rat_clipped[n] for n in range(len(avg_int_flx_rat_clipped)) if avg_int_flx_rat_clipped[n][1]==freq]
+        rms=[avg_int_flx_rat_clipped[n][2] for n in range(len(avg_int_flx_rat_clipped)) if avg_int_flx_rat_clipped[n][1]==freq]
+        if len(rms)==0:
+            avg_rms=0.
+        else:
+            avg_rms=(sum(rms)/len(rms))
+        rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
+        rms2=[avg_int_flx_rat_clipped[n][3] for n in range(len(avg_int_flx_rat_clipped)) if avg_int_flx_rat_clipped[n][1]==freq]
+        avg_rms2=(sum(rms2)/len(rms2))
+        rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
+        ellipticity2=[avg_int_flx_rat_clipped[n][4] for n in range(len(avg_int_flx_rat_clipped)) if avg_int_flx_rat_clipped[n][1]==freq]
+        avg_ellipticity2=(sum(ellipticity2)/len(ellipticity2))
+        rms_ellipticity2= math.sqrt((sum(n*n-(avg_ellipticity2*avg_ellipticity2) for n in ellipticity2))/len(ellipticity2))
+        plotfig3(avg_int_flx_rat2_clipped, 'Observation Time (hours)', 'Average Flux Ratio (Observed/Correct_sky)', 'flxrat_'+str(int(freq))+'_clipped',avg_rms,rms_rms,'Frequency: '+str(int(freq)), freq,avg_rms2,rms_rms2)
+        plotfig5(avg_int_flx_rat2_clipped, 'Ellipticity (Bmaj/Bmin)', 'Average Flux Ratio (Observed/Correct_sky)', 'flxrat_'+str(int(freq))+'_clipped',avg_rms,rms_rms,'Frequency: '+str(int(freq)), freq,avg_ellipticity2,rms_ellipticity2)
 
     print 'Failed images: %s' % ', '.join(str(val) for val in failed_images)
     print 'TraP quality control plots made :-)'
@@ -195,10 +274,15 @@ def plotfig(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
     n1=0
     n2=0
     x=0
+    dt_array=[]
     start_time = min(trans_data[x][a] for x in range(len(trans_data)))
     for x in range(len(trans_data)):
+        tmp=abs(trans_data[x][a]-start_time)
         dt=str(abs(trans_data[x][a]-start_time)).split(':')
+        if "day" in dt[0]:
+            dt[0]=tmp.days*24.
         dt=float(dt[0])+float(dt[1])/60+float(dt[2])/3600
+        dt_array.append(dt)
         plt.plot(dt, [trans_data[x][b]],'r.')
     ymin=min(trans_data[x][b] for x in range(len(trans_data)))*0.7
     ymax=max(trans_data[x][b] for x in range(len(trans_data)))*1.1
@@ -208,12 +292,53 @@ def plotfig(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
     plt.xlabel(xlabel)
     plt.annotate('Mean: '+str(round(avg,3)), xy=(24.3, avg*1.1),  xycoords='data', color='b')
     plt.annotate('RMS: '+str(round(rms,3)), xy=(24.3, (rms+avg)*1.1),  xycoords='data', color='b')
-    plt.axis([-1,30,ymin,ymax])
+    plt.axis([-1,max(dt_array),ymin,ymax])
     plt.ylabel(ylabel)
     plt.title(title)
     plt.savefig(plotname+'.png')
     plt.close()
 
+def plotfig4(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
+    print('plotting figure: '+plotname)
+    plt.figure()
+    x1=[]
+    x2=[]
+    y1=[]
+    y2=[]
+    n1=0
+    n2=0
+    x=0
+    dt_array=[]
+    start_time = min([trans_data[x][a] for x in range(len(trans_data))])
+    for x in range(len(trans_data)):
+        dt=trans_data[x][a]
+        dt_array.append(dt)
+        plt.plot(dt, [trans_data[x][b]],'r.')
+    rms=[trans_data[x][b] for x in range(len(trans_data))]
+    avg_rms=(sum(rms)/len(rms))
+    rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
+    rms2=[trans_data[x][a] for x in range(len(trans_data))]
+    avg_rms2=(sum(rms2)/len(rms2))
+    rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
+
+    ymin=min(trans_data[x][b] for x in range(len(trans_data)))*0.7
+    ymax=max(trans_data[x][b] for x in range(len(trans_data)))*1.1
+    plt.axhline(y=avg_rms, linewidth=1, color='b')
+    plt.axhline(y=avg_rms+rms_rms, linewidth=1, color='b', linestyle='--')
+    plt.axhline(y=avg_rms-rms_rms, linewidth=1, color='b', linestyle='--')
+    plt.axvline(x=avg_rms2, linewidth=1, color='b')
+    plt.axvline(x=avg_rms2+rms_rms2, linewidth=1, color='b', linestyle='--')
+    plt.axvline(x=avg_rms2-rms_rms2, linewidth=1, color='b', linestyle='--')
+    plt.xlabel(xlabel)
+    plt.annotate('Mean: '+str(round(avg_rms,3)), xy=(max(dt_array)*0.8, avg_rms*1.1),  xycoords='data', color='b')
+    plt.annotate('RMS: '+str(round(rms_rms,3)), xy=(max(dt_array)*0.8, (avg_rms+rms_rms)*1.1),  xycoords='data', color='b')
+    plt.annotate('Mean: '+str(round(avg_rms2,3)), xy=(avg_rms2*1.1,ymax*0.8),  xycoords='data', color='b')
+    plt.annotate('RMS: '+str(round(rms_rms2,3)), xy=(avg_rms2*1.1,ymax*0.85),  xycoords='data', color='b')
+    plt.axis([1.,max(dt_array)+0.1,ymin,ymax])
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.savefig(plotname+'.png')
+    plt.close()
 
 def plotfig2(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
     print('plotting figure: '+plotname)
@@ -305,8 +430,11 @@ def find_avg_int_flx_rat(vlss,min_flux,restfrq,pyse):
     srcs_vlss=extract_sky(vlss,min_flux,restfrq)
     srcs_pyse=extract_pyse(pyse,min_flux)
     intflxrat=source_assoc(srcs_vlss,srcs_pyse)
-    avgintflxrat = sum(intflxrat)/float(len(intflxrat))
-    return avgintflxrat
+    if len(intflxrat)==0:
+        return 0.0
+    else:
+        avgintflxrat = sum(intflxrat)/float(len(intflxrat))
+        return avgintflxrat
 
 def plotfig3(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
     print('plotting figure: '+plotname)
@@ -318,14 +446,16 @@ def plotfig3(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
     n1=0
     n2=0
     x=0
-    start_time = min(trans_data[x][0] for x in range(len(trans_data)))
+    dt_array=[]
+    start_time = min([trans_data[x][0] for x in range(len(trans_data))])
     for x in range(len(trans_data)):
         if trans_data[x][1] == freq:
-            dt=str(abs(trans_data[x][a]-start_time)).split(':')
+            tmp=abs(trans_data[x][0]-start_time)
+            dt=str(abs(trans_data[x][0]-start_time)).split(':')
             if "day" in dt[0]:
-                dt[0]=dt.days*24.
+                dt[0]=tmp.days*24.
             dt=float(dt[0])+float(dt[1])/60+float(dt[2])/3600
-            print dt
+            dt_array.append(dt)
             plt.plot(dt, [trans_data[x][2]],'r.')
     ymin=min(trans_data[x][2] for x in range(len(trans_data)))*0.7
     ymax=max(trans_data[x][2] for x in range(len(trans_data)))*1.1
@@ -335,8 +465,9 @@ def plotfig3(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
     plt.xlabel(xlabel)
     plt.annotate('Mean: '+str(round(avg,3)), xy=(24.3, avg*1.1),  xycoords='data', color='b')
     plt.annotate('RMS: '+str(round(rms,3)), xy=(24.3, (rms+avg)*1.1),  xycoords='data', color='b')
-    plt.axis([-1,max(dt)+1,ymin,ymax])
+    plt.axis([-1,max(dt_array)+1,-1.,ymax])
     plt.ylabel(ylabel)
+    plt.yscale('log')
     plt.title(title)
     plt.savefig(plotname+'.png')
     plt.close()
@@ -361,6 +492,39 @@ def plotfig3(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
     plt.savefig(plotname+'_rms.png')
     plt.close()
 
+def plotfig5(trans_data, xlabel, ylabel, plotname,avg,rms,title,freq,avg2,rms2):
+    print('plotting figure: '+plotname)
+    plt.figure()
+    x1=[]
+    x2=[]
+    y1=[]
+    y2=[]
+    n1=0
+    n2=0
+    x=0
+    plt.figure()
+    ymin=min(trans_data[x][2] for x in range(len(trans_data)))*0.7
+    ymax=max(trans_data[x][2] for x in range(len(trans_data)))*1.1
+    xmin=1.
+    xmax=max(trans_data[x][4] for x in range(len(trans_data)))+0.1
+    for x in range(len(trans_data)):
+        plt.plot(trans_data[x][4],trans_data[x][2],'r.')
+    plt.axhline(y=avg, linewidth=1, color='b')
+    plt.axhline(y=avg+rms, linewidth=1, color='b', linestyle='--')
+    plt.axhline(y=avg-rms, linewidth=1, color='b', linestyle='--')
+    plt.axvline(x=avg2, linewidth=1, color='b')
+    plt.axvline(x=avg2+rms2, linewidth=1, color='b', linestyle='--')
+    plt.xlabel('Ellipticity (Bmaj/Bmin)')
+    plt.annotate('Mean: '+str(round(avg,3)), xy=(xmax*0.8, avg*1.1),  xycoords='data', color='b')
+    plt.annotate('RMS: '+str(round(rms,3)), xy=(xmax*0.8, (rms+avg)*1.1),  xycoords='data', color='b')
+    plt.annotate('Mean: '+str(round(avg2,3)), xy=(avg2*1.1, ymax*0.8),  xycoords='data', color='b')
+    plt.annotate('RMS: '+str(round(rms2,3)), xy=((avg2)*1.1, ymax*0.85),  xycoords='data', color='b')
+    plt.axis([1.,xmax,-1.,ymax])
+    plt.ylabel(ylabel)
+    plt.yscale('log')
+    plt.title(title)
+    plt.savefig(plotname+'_ellipticity_rms.png')
+    plt.close()
 
 opt = optparse.OptionParser()
 opt.add_option('-b','--maxbl',help='Maximum baseline used in imaging (km)',default='6',type='int')

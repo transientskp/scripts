@@ -20,6 +20,8 @@ def dump_images(dbname, dataset_id):
             ,im.freq_eff
             ,im.url
             ,im.taustart_ts
+            ,im.rb_smaj
+            ,im.rb_smin
             ,sr.centre_ra
             ,sr.centre_decl
             ,r.comment
