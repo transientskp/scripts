@@ -2,7 +2,6 @@
 import datetime
 import time
 import matplotlib
-#matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os
@@ -12,16 +11,20 @@ import math
 import sys
 from datetime import datetime
 from scipy.stats import norm
+import pylab
+pylab.rcParams['legend.loc'] = 'best'
 
 ###################### INITIAL SETUP STEPS ######################
 
-if len(sys.argv) != 5:
-    print 'python TraP_source_overview.py <database> <dataset_id> <release> <sigma>'
+if len(sys.argv) != 7:
+    print 'python TraP_source_overview.py <database> <dataset_id> <release> <sigma> <plt_all> <plt_freqs>'
     exit()
 database = sys.argv[1]
 dataset_id = str(sys.argv[2])
 release = str(sys.argv[3])
 sigma = float(sys.argv[4])
+plt_all = sys.argv[5]
+plt_freqs = sys.argv[6]
 
 if release!='0' and release!='1':
     print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
@@ -33,25 +36,22 @@ trans_data=[]
 
 ###################### DEFINE SUBROUTINES ######################
 
-def plothist(x, name,filename,sigma):
+def plothist(x, name,filename,sigma,freq):
     param=norm.fit(x)
     range_x=np.linspace(min(x),max(x),1000)
     fit=norm.pdf(range_x,loc=param[0],scale=param[1])
     plt.plot(range_x,fit, 'r-')
-    plt.hist(x,bins=100,normed=1,histtype='stepfilled')
-    plt.semilogy()
+    plt.hist(x,bins=50,normed=1,histtype='stepfilled')
     sigcut = param[1]*sigma+param[0]
     plt.axvline(x=sigcut, linewidth=2, color='k', linestyle='--')
     plt.title('%s mean: %.3f sd: %.3f' % (name, param[0], param[1]))
     plt.text((sigcut-(0.3*param[1])), 1, r'%.1f $\sigma$: %.3f' % (sigma,sigcut), rotation=90)
     plt.xlabel(name)
-    plt.yscale('log')
-    plt.axis([-2,max(x),5e-3,2])
-    plt.savefig(filename+'_1gauss.png')
+    plt.savefig(filename+'_1gauss_'+str(freq)+'MHz.png')
     plt.close()
     return sigcut
 
-def plotfig(trans_data, a, b, xlabel, ylabel, plotname,sigcut_etanu,sigcut_Vnu):
+def plotfig(trans_data, a, b, xlabel, ylabel, plotname,sigcut_etanu,sigcut_Vnu,frequencies):
     print('plotting figure: '+plotname)
     plt.figure()
     x1=[]
@@ -71,8 +71,8 @@ def plotfig(trans_data, a, b, xlabel, ylabel, plotname,sigcut_etanu,sigcut_Vnu):
         xmin=0.01
         xmax=5.0
     elif a == 4:
-        xmin=0.0
-        xmax=105.0
+        xmin=0.05
+        xmax=200.0
     elif a == 5:
         xmin=0.5
         xmax=7.5
@@ -91,10 +91,14 @@ def plotfig(trans_data, a, b, xlabel, ylabel, plotname,sigcut_etanu,sigcut_Vnu):
     elif b == 5:
         ymin=0.5
         ymax=7.5
-    for x in range(len(trans_data)):
-        plt.plot(trans_data[x][a], [trans_data[x][b]],'r.')
+    col=['r','b','g','y']
+    for i in range(len(frequencies)):
+        xdata=[trans_data[x][a] for x in range(len(trans_data)) if trans_data[x][6]==frequencies[i]]
+        ydata=[trans_data[x][b] for x in range(len(trans_data)) if trans_data[x][6]==frequencies[i]]
+        plt.plot(xdata, ydata,'.'+col[i])
     plt.xlabel(xlabel)
-    if a == 1 or a == 3:
+    plt.legend(frequencies)
+    if a == 1 or a == 3 or a == 4:
         plt.xscale('log')
     if b == 1 or b == 3:
         plt.yscale('log')
@@ -146,59 +150,119 @@ data.close()
 runcat=0
 ### Reading the lightcurves of each individual source in the dataset
 new_source={}
+frequencies=[]
+earliest=datetime.strptime(sources[0][8], '%Y-%m-%d %H:%M:%S')
 for a in range(len(sources)):
     new_runcat=sources[a][6]
+    new_freq=int((float(sources[a][5])/1e6)+0.5)
     if new_runcat != runcat:
         runcat=new_runcat
         new_source[runcat]=[sources[a]]
     else:
         new_source[runcat]=new_source[runcat]+[sources[a]]
+    if new_freq not in frequencies:
+        frequencies.append(new_freq)
+    if (earliest-datetime.strptime(sources[a][8], '%Y-%m-%d %H:%M:%S')).days<0:
+        earliest=datetime.strptime(sources[a][8], '%Y-%m-%d %H:%M:%S')
 
 ### Creating plots for each individual source in the dataset
-for keys in new_source.keys():
-    flux=[]
-    flux_err=[]
-    date=[]
-    for b in range(len(new_source[keys])):
-        flux.append(float(new_source[keys][b][3]))
-        flux_err.append(float(new_source[keys][b][4]))
-        date.append(datetime.strptime(new_source[keys][b][8], '%Y-%m-%d %H:%M:%S'))
-    oldest=min(date)
-    time_diff=[]
-    for c in range(len(date)):
-        time1=time.mktime(date[c].timetuple())
-        time2=time.mktime(oldest.timetuple())
-        time3=(time1-time2)
-        time_diff.append(time3)
+
+trans_data_all=[]
+bands={}
+for freq in frequencies:
+    trans_data=[]
+    for keys in new_source.keys():
+        flux=[]
+        flux_err=[]
+        date=[]
+        band=[]
+        for b in range(len(new_source[keys])):
+            if int((float(new_source[keys][b][5])/1e6)+0.5)==freq:
+                band.append(new_source[keys][b][11])
+                flux.append(float(new_source[keys][b][3]))
+                flux_err.append(float(new_source[keys][b][4]))
+                date.append(datetime.strptime(new_source[keys][b][8], '%Y-%m-%d %H:%M:%S'))
+        bands[freq]=band
+        if len(date)!=0:
+            oldest=min(date)
+            if plt_all == 'F':
+                if abs((earliest-oldest).days)<=2:
+                    time_diff=[]
+                    for c in range(len(date)):
+                        time1=time.mktime(date[c].timetuple())
+                        time2=time.mktime(oldest.timetuple())
+                        time3=(time1-time2)
+                        time_diff.append(time3)
     ### Calculate the ratios...
-    avg_flux_ratio = [x / (sum(flux)/len(flux)) for x in flux]
+                    avg_flux_ratio = [x / (sum(flux)/len(flux)) for x in flux]
     ### Collate and store the transient parameters (these are across all the pipeline runs for the final figures)
-    for n in range(len(transients)):
-        if keys == transients[n][5]:
-            trans_data.append([keys, float(transients[n][3]), float(transients[n][6]), float(transients[n][10]), max(flux), max(avg_flux_ratio)])
+                    for n in range(len(transients)):
+                        if keys == transients[n][5] and transients[n][9] in bands[freq]:
+                            trans_data.append([keys, float(transients[n][3]), float(transients[n][6]), float(transients[n][10]), max(flux), max(avg_flux_ratio),freq])
+                            trans_data_all.append([keys, float(transients[n][3]), float(transients[n][6]), float(transients[n][10]), max(flux), max(avg_flux_ratio), freq])
+            else:
+                time_diff=[]
+                for c in range(len(date)):
+                    time1=time.mktime(date[c].timetuple())
+                    time2=time.mktime(oldest.timetuple())
+                    time3=(time1-time2)
+                    time_diff.append(time3)
+    ### Calculate the ratios...
+                avg_flux_ratio = [x / (sum(flux)/len(flux)) for x in flux]
+    ### Collate and store the transient parameters (these are across all the pipeline runs for the final figures)
+                for n in range(len(transients)):
+                    if keys == transients[n][5] and transients[n][9] in bands[freq]:
+                        trans_data.append([keys, float(transients[n][3]), float(transients[n][6]), float(transients[n][10]), max(flux), max(avg_flux_ratio),freq])
+                        trans_data_all.append([keys, float(transients[n][3]), float(transients[n][6]), float(transients[n][10]), max(flux), max(avg_flux_ratio),freq])
+
+    print 'Number of transients in sample: '+str(len(trans_data))+' at '+str(freq)+'MHz'
+    
 
 ###################### CREATING ALL TRANSIENT PLOTS ######################
 
+    if plt_freqs == 'T':
+        label={1: r'$\eta_\nu$', 2: 'Significance', 3: r'V$_\nu$', 4: 'Max Flux (Jy)', 5: 'Max Flux Ratio (extracted/average)'}
+        plotname={1: 'etanu', 2: 'signif', 3: 'Vv', 4: 'flux', 5: 'flxrat'}
+        data=[np.log10(x[1]) for x in trans_data if x[1]>0]
+        sigcut_etanu=10.**(plothist(data,r'log($\eta_\nu$)','etanu_hist',sigma,freq))
+        data=[np.log10(x[3]) for x in trans_data if x[3]>0]
+        sigcut_Vnu=10.**(plothist(data,r'log(V$_\nu$)','Vnu_hist',sigma,freq))
+        plotfig(trans_data, 4, 1, label[4], label[1], plotname[4]+'_'+plotname[1]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 4, 3, label[4], label[3], plotname[4]+'_'+plotname[3]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 5, 1, label[5], label[1], plotname[5]+'_'+plotname[1]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 5, 3, label[5], label[3], plotname[5]+'_'+plotname[3]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 1, 3, label[1], label[3], plotname[1]+'_'+plotname[3]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 4, 2, label[4], label[2], plotname[4]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 5, 2, label[5], label[2], plotname[5]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 1, 2, label[1], label[2], plotname[1]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+        plotfig(trans_data, 3, 2, label[3], label[2], plotname[3]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+    output3 = open('trans_data_'+str(freq)+'.txt','w')
+    output3.write('#Trans_id,eta_nu,signif,V_nu,flux,fluxrat \n')
+    for x in range(len(trans_data)):
+        string='%s' % ', '.join(str(val) for val in trans_data[x])
+        output3.write(string+'\n')
+    output3.close()
+trans_data=trans_data_all
+###################### CREATING ALL TRANSIENT PLOTS ######################
+frequencies.sort()
 label={1: r'$\eta_\nu$', 2: 'Significance', 3: r'V$_\nu$', 4: 'Max Flux (Jy)', 5: 'Max Flux Ratio (extracted/average)'}
 plotname={1: 'etanu', 2: 'signif', 3: 'Vv', 4: 'flux', 5: 'flxrat'}
-
+freq='all'
 data=[np.log10(x[1]) for x in trans_data if x[1]>0]
-sigcut_etanu=10.**(plothist(data,r'log($\eta_\nu$)','etanu_hist',sigma))
+sigcut_etanu=10.**(plothist(data,r'log($\eta_\nu$)','etanu_hist',sigma,freq))
 data=[np.log10(x[3]) for x in trans_data if x[3]>0]
-sigcut_Vnu=10.**(plothist(data,r'log(V$_\nu$)','Vnu_hist',sigma))
+sigcut_Vnu=10.**(plothist(data,r'log(V$_\nu$)','Vnu_hist',sigma,freq))
+plotfig(trans_data, 4, 1, label[4], label[1], plotname[4]+'_'+plotname[1]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 4, 3, label[4], label[3], plotname[4]+'_'+plotname[3]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 5, 1, label[5], label[1], plotname[5]+'_'+plotname[1]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 5, 3, label[5], label[3], plotname[5]+'_'+plotname[3]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 1, 3, label[1], label[3], plotname[1]+'_'+plotname[3]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 4, 2, label[4], label[2], plotname[4]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 5, 2, label[5], label[2], plotname[5]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 1, 2, label[1], label[2], plotname[1]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
+plotfig(trans_data, 3, 2, label[3], label[2], plotname[3]+'_'+plotname[2]+'_'+str(freq)+'MHz',sigcut_etanu, sigcut_Vnu, frequencies)
 
-plotfig(trans_data, 4, 1, label[4], label[1], plotname[4]+'_'+plotname[1],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 4, 3, label[4], label[3], plotname[4]+'_'+plotname[3],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 5, 1, label[5], label[1], plotname[5]+'_'+plotname[1],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 5, 3, label[5], label[3], plotname[5]+'_'+plotname[3],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 1, 3, label[1], label[3], plotname[1]+'_'+plotname[3],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 4, 2, label[4], label[2], plotname[4]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 5, 2, label[5], label[2], plotname[5]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 1, 2, label[1], label[2], plotname[1]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
-plotfig(trans_data, 3, 2, label[3], label[2], plotname[3]+'_'+plotname[2],sigcut_etanu, sigcut_Vnu)
-
-
-output3 = open('trans_data.txt','w')
+output3 = open('trans_data_'+str(freq)+'.txt','w')
 output3.write('#Trans_id,eta_nu,signif,V_nu,flux,fluxrat \n')
 for x in range(len(trans_data)):
     string='%s' % ', '.join(str(val) for val in trans_data[x])

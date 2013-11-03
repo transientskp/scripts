@@ -28,15 +28,14 @@ def dump_trans(dbname, dataset_id):
          ,runningcatalog_flux rf
     WHERE tr.runcat = rc.id
       AND rf.runcat = rc.id
+      AND tr.band = rf.band
       AND rc.dataset = %s
     """
     db.execute(transients_query, dataset_id)
     raw_transient_results = db.fetchall()
-    #print db.cursor.description
-    #print raw_transient_results[0]
     transients = convert_results_to_list_of_dicts(raw_transient_results,
                                                   db.cursor.description)
-    print "Found", len(transients), "transients"
+    print "Found", len(transients), "transient datapoints"
 
     sources_query = """\
     SELECT  im.taustart_ts
