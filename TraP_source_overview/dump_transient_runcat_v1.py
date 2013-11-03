@@ -32,6 +32,7 @@ def dump_trans(dbname, dataset_id, engine='monetdb', host='heastrodb', port=5200
          ,runningcatalog_flux rf
     WHERE tr.runcat = rc.id
       AND rf.runcat = rc.id
+      AND tr.band = rf.band
       AND rc.dataset = %s
     """
     cursor = tkp.db.execute(transients_query, (dataset_id,))
