@@ -26,8 +26,8 @@ sigma = float(sys.argv[4])
 plt_all = sys.argv[5]
 plt_freqs = sys.argv[6]
 
-if release!='0' and release!='1':
-    print 'This script is for either Cycle0 (0) or Release 1 (1) databases, please specify 0 or 1.'
+if release!='0' and release!='1m' and release!='1p':
+    print 'This script is for either Cycle0 (0) or Release 1 MonetDB (1m) or Release 1 Postgres (1p) databases, please specify 0, 1m or 1p.'
     exit()
 
 # Setting up the general lists and dictionaries needed
@@ -126,9 +126,13 @@ if release == '0':
     import dump_transient_runcat_v0
     from dump_transient_runcat_v0 import dump_trans
     dump_trans(database,dataset_id)
-elif release == '1':
+elif release == '1m':
     import dump_transient_runcat_v1
     from dump_transient_runcat_v1 import dump_trans
+    dump_trans(database,dataset_id)
+elif release == '1p':
+    import dump_transient_runcat_v1_postgres
+    from dump_transient_runcat_v1_postgres import dump_trans
     dump_trans(database,dataset_id)
 else:
     print 'ERROR in release number'
