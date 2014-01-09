@@ -1,0 +1,20 @@
+Usage: python TraP_anomaly_detection.py <database> <dataset_id> <Release> <sigma>
+
+Requirements:
+sys, numpy, math, matplotlib, pylab, scipy
+Access to TraP databases
+
+This script is the start of implementing a machine learning anomaly detection strategy. Still to be completed: optimisation of the sigma using training datasets.
+
+Instructions:
+
+1. Run TraP on your restored.corr images and force it to treat all sources as transient (in transientsearch.parset set all thresholds=0 and minpoints=1). Note the database you are using and the dataset_id for entry later.
+2. Create a folder to run this script in.
+3. You are now ready to run this script. Go to ${your_working_folder} and run: 
+   python TraP_source_overview.py <database> <dataset_id> <release> <sigma>
+   The release is the version of the pipeline that you are running. For release 1 you can use either a MonetDB database or a Postgres database, hence you need to specify '1m' for MonetDB and '1p' for Postgres. 
+   This script will fit the eta_nu and V_nu values with a Gaussian distribution (in log space). It will then determine which transient sources are anomalous (i.e. > sigma above the mean) relative to the distribution. 
+
+If you are not running this script on heastro1, you will need to edit dump_transients_v1.py to point to your database.
+
+Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl
