@@ -21,8 +21,8 @@ Options:
                         Radius used in gsm.py to find skymodel (degrees)
   -f FLUX_LIMIT, --flux_limit=FLUX_LIMIT
                         Min flux used for analysis of flux ratios (Jy)
-  -m MAX_THEORETICAL_RATIO_CUT, --max_theoretical_ratio_cut=MAX_THEORETICAL_RATIO_CUT
-                        Cut on theoretical noise ratio to remove images where AWImager failed
+  -m MAX_CUT, --max_cut=MAX_CUT
+                        Cut on theoretical noise ratio to clip images that are (MAX_CUT*median_rms_rms) above the median_rms_ratio. The default is 5 sigma.
 
 Requirements:
 gsm.py, pyse, os, glob, pyfits, sys, numpy, datetime, coords, math, matplotlib, optparse
@@ -34,7 +34,7 @@ Instructions:
 2. Run TraP on your restored.corr images and force it to reject all images (in quality_check.parset set "high_bound=1"). Note the database you are using and the dataset_id for entry later.
 3. Create a folder to run this script in.
 4. Create fits images of all the images you are using. I recommend using this command:
-   for i in *.restored.corr; do image2fits in=${image_location}/${i} out=${your_working_folder}/${i}.fits; done
+   for i in *.restored.corr; do image2fits in=${i} out=${your_working_folder}/${i}.fits; done
 5. You are now ready to run this script. Go to ${your_working_folder} and run: 
    python TraP_QC_plots.py [options] <database> <dataset_id>
    The default parameters for all the options have been optimised for the RSM dataset, so check the values on lines 350-360 suit your requirements before running this script.
