@@ -46,6 +46,9 @@ Contents
 `simulated_datasets <https://github.com/transientskp/scripts/tree/master/simulated_datasets>`_
     Scripts used to create and analyse simulated datasets.
 
+`TraP_QC_diagnostics <https://github.com/transientskp/scripts/tree/master/TraP_QC_diagnosticss>`_
+    A script that uses TraP outputs analyse the quality of images and outputs the recommended QC settings for TraP.
+
 `TraP_QC_plots <https://github.com/transientskp/scripts/tree/master/TraP_QC_plots>`_
     Creates a variety of plots to give an overview of the quality of a given dataset for TraP.
 
