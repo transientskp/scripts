@@ -1,0 +1,211 @@
+#!/usr/bin/python
+#
+#
+# Author: Antonia Rowlinson
+# E-mail: b.a.rowlinson@uva.nl
+#
+from datetime import datetime
+import coords as C
+from scipy.stats import norm
+from scipy.optimize import leastsq
+import numpy as np
+import math
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import dump_image_data_v1
+from dump_image_data_v1 import dump_images
+
+def get_data(database, dataset_id, dataset_id2, release):
+#
+# Calls a function to dump the image data from the TraP database into a CSV file
+#
+    if release == '1m':
+        dump_images(database,dataset_id, dataset_id2, 'monetdb', 'heastrodb', 52000)
+        return
+    elif release == '1p':
+        dump_images(database,dataset_id, dataset_id2, 'postgresql', 'heastrodb', 5432)
+        return
+    else:
+        print 'This script is for either Release 1 MonetDB (1m) or Release 1 Postgres (1p) databases, please specify 1m or 1p.'
+        exit()
+
+def extract_data(dataset_id, CasA, CygA, VirA):
+#
+# Opens the CSV file output from get_data and reads the relevant data into an array
+#
+    image_info=[]
+    image_data=open('ds_'+dataset_id+'_images.csv','r')
+    list_img = image_data.readlines()
+    image_data.close()
+    frequencies=[]
+    for lines in list_img: # Loop through all the images
+        row=lines.split(',')
+        image=row[8].split('/')[-1].rstrip()+'.fits' # Image name
+        date=datetime.strptime(row[7].strip(),'%Y-%m-%d %H:%M:%S') # Time of observation (not currently used)
+        freq=int((float(row[3].strip())/1e6) + 0.5) # Observation frequency, integer number in MHz
+        if freq not in frequencies: # Keeping a record of which frequencies are in the dataset
+            frequencies.append(freq)
+        ellipticity=float(row[5])/float(row[6]) # Restoring beam ellipticity, Bmaj/Bmin
+        theoretical=float(row[2].split(' ')[8].split('(')[1].split(')')[0].strip()) # Theoretical noise limit
+        ratio=float(row[2].split(' ')[4].strip()) # Observed RMS / Theoretical noise (calculated by TraP)
+        rms=theoretical*ratio # Image RMS
+        pc = C.Position((float(row[1]), float(row[0]))) # Position of the image centre
+         # Separation of image centre relative to A-Team sources
+        posdif_CasA=float(str(CasA.angsep(pc)).split(' degrees')[0])
+        posdif_CygA=float(str(CygA.angsep(pc)).split(' degrees')[0])
+        posdif_VirA=float(str(VirA.angsep(pc)).split(' degrees')[0])
+        # Input data into array: [RA, Dec, Obs date, Obs Freq, RMS noise, Theoretical noise, RMS/Theoretical, Restoring beam ellipticity, Seperation CasA, Seperation CygA, Seperation VirA, Image name]
+        image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,ellipticity,posdif_CasA,posdif_CygA,posdif_VirA,image])
+    return image_info, frequencies
+
+def fit_hist(data, sigma, xlabel, pltname, freq):
+# fit a Gaussian distribution to the input data, output a plot and threshold for a given sigma
+    p=guess_p(data)
+    mean, rms, threshold = plothist(data, xlabel, pltname, sigma,freq, p)
+    return mean, rms, threshold
+
+def res(p, y, x):
+# calculate residuals between data and Gaussian model
+  m1, sd1, a = p
+  y_fit = a*norm2(x, m1, sd1)
+  err = y - y_fit
+  return err
+
+def guess_p(x):
+# estimate the mean and rms as initial inputs to the Gaussian fitting
+    median = np.median(x)
+    temp=[n*n-(median*median) for n in x]
+    rms = math.sqrt((abs(sum(temp))/len(x)))
+    return [median, rms, math.sqrt(len(x))]
+
+def norm2(x, mean, sd):
+# creates a normal distribution in a simple array for plotting
+    normdist = []
+    for i in range(len(x)):
+        normdist += [1.0/(sd*np.sqrt(2*np.pi))*np.exp(-(x[i] - mean)**2/(2*sd**2))]
+    return np.array(normdist)
+    
+def plothist(x, name,filename,sigma,freq,p):
+#
+# Create a histogram of the data and fit a Gaussian distribution to it
+#
+    hist_x=np.histogram(x,bins=200) # histogram of data
+    range_x=[hist_x[1][n]+(hist_x[1][n+1]-hist_x[1][n])/2. for n in range(len(hist_x[1])-1)]
+    plt.hist(x,bins=200,histtype='stepfilled')
+    plsq = leastsq(res, p, args = (hist_x[0], range_x)) # fit Gaussian to data
+    fit2 = plsq[0][2]*norm2(range_x, plsq[0][0], plsq[0][1]) # create Gaussian distribution for plotting on graph
+    plt.plot(range_x,fit2, 'r-', linewidth=3)
+    sigcut=plsq[0][0]+plsq[0][1]*sigma # threshold defined as (mean + RMS * sigma)
+    plt.axvline(x=sigcut, linewidth=2, color='k',linestyle='--')
+    plt.xlabel(name)
+    plt.ylabel('Number of images')
+    plt.savefig(filename+'_'+str(freq)+'MHz.png')
+    plt.close()
+    return plsq[0][0], plsq[0][1], sigcut
+
+def plotfig_ATeam(trans_data, a, b, xlabel, ylabel, plotname,min_sep,avg):
+    plt.figure()
+    xvals=[trans_data[x][a] for x in range(len(trans_data))]
+    yvals=[trans_data[x][b] for x in range(len(trans_data))]
+    plt.plot(xvals,yvals,'r.',zorder=1)
+    xmin=min(trans_data[x][a] for x in range(len(trans_data)))*0.7
+    xmax=max(trans_data[x][a] for x in range(len(trans_data)))*1.3
+    ymin=min(trans_data[x][b] for x in range(len(trans_data)))*0.7
+    ymax=max(trans_data[x][b] for x in range(len(trans_data)))*1.1
+    bin_size = ((xmax/1.3) - (xmin/0.7)) / 200.
+    bins = [(x*bin_size)+(xmin/0.7) for x in range(200)]
+    yavg=[]
+    ysig=[]
+    xbins_to_pop=[]
+    count=0
+    bins_tmp=bins
+    for xbin in range(len(bins_tmp)):
+        ydata=[trans_data[x][b] for x in range(len(trans_data)) if trans_data[x][a] >= bins_tmp[xbin] if trans_data[x][a] < bins_tmp[xbin]+bin_size]
+        if len(ydata) != 0:
+            yscatter=math.sqrt(sum([y**2.-np.mean(ydata)**2. for y in ydata])/len(ydata))
+            yavg.append(np.mean(ydata))
+            ysig.append(yscatter)
+        else:
+            xbins_to_pop.append(xbin)
+    new_bins = [bins[x] for x in range(len(bins)) if x not in xbins_to_pop]
+    bins=[b2+(bin_size/2.) for b2 in new_bins]
+    nums=6
+    max_cutoff=20.
+    for k in range(len(new_bins)):
+        if yavg[k]<avg:
+            if k>nums:
+                if new_bins[k]+1. < max_cutoff:
+                    min_sep=int(round(new_bins[k],0)+1.)
+            break
+    plt.xlabel(xlabel)
+    plt.errorbar(bins,yavg,fmt='.',color='k',linestyle='-',zorder=50)
+    plt.axis([xmin,xmax,ymin,ymax])
+    plt.ylabel(ylabel)
+    plt.axhline(y=avg, linewidth=1, color='b')
+    plt.savefig(plotname+'.png')
+    plt.close()
+    return min_sep
+
+def plotfig_scatter(trans_data, a, b, xlabel, ylabel, plotname):
+    xvals=[trans_data[x][a] for x in range(len(trans_data))]
+    yvals=[trans_data[x][b] for x in range(len(trans_data))]
+    plt.figure()
+    plt.plot(xvals, yvals,'r.')
+    ymin=min(yvals)*0.9
+    ymax=max(yvals)*1.1
+    xmin=min(xvals)*0.9
+    xmax=max(xvals)*1.1
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.savefig(plotname+'.png')
+    plt.close()
+
+def extract_sky(vlss_sources,restfrq,frq):
+    srcs_vlss=[]
+    for a in vlss_sources:
+        nums=a.split(', ')
+        dec=nums[3]
+        dec=dec.replace('.',':', 2)
+        position= nums[2] + ' ' + dec
+        f=nums[9].split('[')
+        A1 = float(f[1].split(']')[0])
+        A2 = 0
+        if len(nums)>10 and ']' in nums[10]: A2 = float(nums[10].split(']')[0])
+        if A2 == 0:
+            new=float(nums[4])*(np.power(restfrq,A1))/(np.power(frq,A1))
+        else:
+            new=float(nums[4])*((np.power(restfrq,A1))+(np.power((restfrq*restfrq),A2)))/((np.power(frq,A1))+(np.power((frq*frq),A2)))
+        srcs_vlss.append([C.Position(position),new])
+    return srcs_vlss
+
+def source_assoc(srcs_vlss,srcs_pyse):
+    intflxrat=np.zeros(len(srcs_pyse))
+    if len(srcs_pyse) > 0:
+        for a in range(len(srcs_pyse)):
+            posdif_old=1000000
+            for b in range(len(srcs_vlss)):
+                posdif=srcs_pyse[a][1].angsep(srcs_vlss[b][0])
+                if posdif < posdif_old:
+                    posdif_old = posdif
+                    intflxrat[a]=float(srcs_pyse[a][2])/float(srcs_vlss[b][1])
+    return intflxrat
+
+def find_avg_int_flx_rat(srcs_vlss,srcs_pyse):
+    intflxrat=source_assoc(srcs_vlss,srcs_pyse)
+    if len(intflxrat)==0:
+        return 0.0, 0.0
+    else:
+        avgintflxrat = sum(intflxrat)/float(len(intflxrat))
+        rms = math.sqrt((sum(n*n - (avgintflxrat*avgintflxrat) for n in intflxrat))/len(intflxrat))
+        return avgintflxrat, rms
+
+def extr_src_data(dataset_id):
+    sources=[]
+    data=open('ds_'+dataset_id+'_sources.csv','r')
+    for lines in data:
+        lines=lines.rstrip()
+        src_data=lines.split(',')
+        sources.append([(src_data[9].split('/'))[-1]+'.fits',C.Position((float(src_data[11]),float(src_data[10]))),src_data[3],src_data[4]])
+    data.close()
+    return sources
