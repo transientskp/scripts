@@ -54,22 +54,21 @@ def main(opts,args):
     VirA=C.Position((187.705930,12.391123))
 
     # Create the noise plots
-#    if release == '0':
-#        import dump_image_data_v0
-#        from dump_image_data_v0 import dump_images
-#        dump_images(database,dataset_id)
-#    elif release == '1':
-#        import dump_image_data_v1
-#        from dump_image_data_v1 import dump_images
-#        dump_images(database,dataset_id)
-#    else:
-#        print 'ERROR in release number'
-#        exit()
+    if release == '0':
+        import dump_image_data_v0
+        from dump_image_data_v0 import dump_images
+        dump_images(database,dataset_id)
+    elif release == '1':
+        import dump_image_data_v1
+        from dump_image_data_v1 import dump_images
+        dump_images(database,dataset_id)
+    else:
+        print 'ERROR in release number'
+        exit()
 
     image_info=[]
-#    image_data=open('ds_'+dataset_id+'_images.csv','r')
-#
-    image_data=open('ds_999_images.csv','r')
+    image_data=open('ds_'+dataset_id+'_images.csv','r')
+#    image_data=open('ds_999_images.csv','r')
     list = image_data.readlines()
     image_data.close()
     frequencies=[]
@@ -95,6 +94,9 @@ def main(opts,args):
             image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,confusion,rms/confusion,posdif_CasA,posdif_CygA,posdif_VirA,image,ellipticity])
         else:
             failed_images.append(row[8].split('/')[-1].rstrip())
+    
+    ellip=[image_info[n][13] for n in range(len(image_info))]
+    plothist2(ellip,r'Ellipticity (B$_{maj}$/B$_{min}$)','ellipticity','all')
 
 
     freq='all'
@@ -113,7 +115,7 @@ def main(opts,args):
     rms_rms_ratio=math.sqrt((sum(n*n-(avg_rms_ratio*avg_rms_ratio) for n in rms_ratio))/len(rms_ratio))
     rms_ratio_log=[np.log10(x) for x in rms_ratio]
     p=guess_p(rms_ratio_log)
-    clip = plothist(rms_ratio_log,r'Observed RMS / Theoretical Noise','rms_ratio',sigma,'all',p)
+    clip = int(plothist(rms_ratio_log,r'Observed RMS / Theoretical Noise','rms_ratio',sigma,'all',p)+0.5)
     if plt_all:
       plotfig(image_info, 2, 6, 'Observation Time (hours)', 'RMS/Theoretical', 'theoretical',avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(freq))
       plotfig4(image_info, 13, 6, 'Ellipticity (Bmaj/Bmin)', 'RMS/Theoretical', 'theoretical_ellipticity',avg_rms_ratio,rms_rms_ratio,'Frequency: '+str(freq))
@@ -132,6 +134,8 @@ def main(opts,args):
     avg_rms2=(sum(rms2)/len(rms2))
     rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
     ellipticity_threshold=avg_rms2+rms_rms2
+    if plt_all:
+      plotfig(image_info, 2, 13, 'Observation Time (hours)', 'Ellipticity (Bmaj/Bmin)', 'ellipticity',avg_rms2,rms_rms2,'Frequency: '+str(freq))
 
     if plt_all:
       for ateam in ['CasA', 'CygA', 'VirA']:
@@ -142,8 +146,8 @@ def main(opts,args):
             a=10
         elif ateam == 'VirA':
             a=11
-        plotfig2(image_info, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(freq),avg_rms,rms_rms,ateam+' - Frequency: '+str(freq))
-        plotfig2(image_info, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(freq),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(freq))
+        plotfig2(image_info, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(freq),avg_rms,rms_rms,ateam+' - Frequency: '+str(freq),min_sep)
+        plotfig2(image_info, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(freq),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(freq),min_sep)
     if plt_frq and plt_all:
       for freq in frequencies:
         image_info2=[image_info[n] for n in range(len(image_info)) if int(image_info[n][3]+0.5)==freq]
@@ -172,11 +176,31 @@ def main(opts,args):
                 a=10
             elif ateam == 'VirA':
                 a=11
-            plotfig2(image_info2, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(int(freq+0.5)),avg_rms,rms_rms,ateam+' - Frequency: '+str(int(freq+0.5)))
-            plotfig2(image_info2, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(int(freq+0.5)),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(int(freq+0.5)))
+            plotfig2(image_info2, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(int(freq+0.5)),avg_rms,rms_rms,ateam+' - Frequency: '+str(int(freq+0.5)),min_sep)
+            plotfig2(image_info2, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(int(freq+0.5)),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(int(freq+0.5)),min_sep)
             
     print 'Clipped image properties'
-    clipped_image_info=[image_info[n] for n in range(len(image_info)) if image_info[n][6] < clip and image_info[n][13] < ellipticity_threshold]
+    print 'noise high bound: '+str(clip)
+    print 'ellipticity clip: '+str(round(ellipticity_threshold,1))
+    clipped_image_info2=[image_info[n] for n in range(len(image_info)) if image_info[n][6] < clip if image_info[n][13] < ellipticity_threshold]
+    rms=[clipped_image_info2[n][4] for n in range(len(clipped_image_info2))]
+    avg_rms=(sum(rms)/len(rms))
+    rms_rms=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms))/len(rms))
+    rms2=[clipped_image_info2[n][13] for n in range(len(clipped_image_info2))]
+    avg_rms2=(sum(rms2)/len(rms2))
+    rms_rms2=math.sqrt((sum(n*n-(avg_rms*avg_rms) for n in rms2))/len(rms2))
+    for ateam in ['CasA', 'CygA', 'VirA']:
+        if ateam == 'CasA':
+            a=9
+        elif ateam == 'CygA':
+            a=10
+        elif ateam == 'VirA':
+            a=11
+        min_sep = plotfig2(clipped_image_info2, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_all_clipped',avg_rms,rms_rms,ateam+' - Frequency: all',min_sep)
+        plotfig2(clipped_image_info2, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_all_clipped',avg_rms2,rms_rms2,ateam+' - Frequency: all',min_sep)
+
+    print 'separation from A-Team: '+str(min_sep)
+    clipped_image_info=[image_info[n] for n in range(len(image_info)) if image_info[n][6] < clip if image_info[n][13] < ellipticity_threshold if image_info[n][9] > min_sep if image_info[n][10] > min_sep if image_info[n][11] > min_sep]
     print 'Number of images remaining: '+str(len(clipped_image_info))
     freq='all'
     rms=[clipped_image_info[n][4] for n in range(len(clipped_image_info))]
@@ -223,9 +247,8 @@ def main(opts,args):
                 a=10
             elif ateam == 'VirA':
                 a=11
-            plotfig2(image_info2, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(int(freq+0.5)),avg_rms,rms_rms,ateam+' - Frequency: '+str(int(freq+0.5)))
-            plotfig2(image_info2, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(int(freq+0.5)),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(int(freq+0.5)))
-
+            plotfig2(image_info2, a, 4, 'Separation (degrees)', 'RMS (Jy/beam)', ateam+'_'+str(int(freq+0.5)),avg_rms,rms_rms,ateam+' - Frequency: '+str(int(freq+0.5)),min_sep)
+            plotfig2(image_info2, a, 13, 'Separation (degrees)', 'Ellipticity (Bmaj/Bmin)', ateam+'_ellipticity_'+str(int(freq+0.5)),avg_rms2,rms_rms2,ateam+' - Frequency: '+str(int(freq+0.5)),min_sep)
     # Flux plots
 
     fitsfiles=glob.glob("*.fits")
@@ -380,7 +403,7 @@ def plotfig4(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
     plt.savefig(plotname+'.png')
     plt.close()
 
-def plotfig2(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
+def plotfig2(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title,min_sep):
     print('plotting figure: '+plotname)
     plt.figure()
     x1=[]
@@ -390,23 +413,53 @@ def plotfig2(trans_data, a, b, xlabel, ylabel, plotname,avg,rms,title):
     n1=0
     n2=0
     x=0
-    for x in range(len(trans_data)):
-        plt.plot([trans_data[x][a]], [trans_data[x][b]],'r.')
+    xvals=[trans_data[x][a] for x in range(len(trans_data))]
+    yvals=[trans_data[x][b] for x in range(len(trans_data))]
+    plt.plot(xvals,yvals,'r.',zorder=1)
     xmin=min(trans_data[x][a] for x in range(len(trans_data)))*0.7
     xmax=max(trans_data[x][a] for x in range(len(trans_data)))*1.3
     ymin=min(trans_data[x][b] for x in range(len(trans_data)))*0.7
     ymax=max(trans_data[x][b] for x in range(len(trans_data)))*1.1
+
+    bin_size = ((xmax/1.3) - (xmin/0.7)) / 200.
+    bins = [(x*bin_size)+(xmin/0.7) for x in range(200)]
+
+    yavg=[]
+    ysig=[]
+    xbins_to_pop=[]
+    count=0
+    bins_tmp=bins
+    for xbin in range(len(bins_tmp)):
+        ydata=[trans_data[x][b] for x in range(len(trans_data)) if trans_data[x][a] >= bins_tmp[xbin] if trans_data[x][a] < bins_tmp[xbin]+bin_size]
+        if len(ydata) != 0:
+            yscatter=math.sqrt(sum([y**2.-np.mean(ydata)**2. for y in ydata])/len(ydata))
+            yavg.append(np.mean(ydata))
+            ysig.append(yscatter)
+#            if np.mean(ydata) > avg:
+#                print 'Value above mean: '+str(xbin)
+        else:
+            xbins_to_pop.append(xbin)
+    new_bins = [bins[x] for x in range(len(bins)) if x not in xbins_to_pop]
+    bins=[b2+(bin_size/2.) for b2 in new_bins]
+    nums=5
+    for k in range(len(new_bins)):
+        if yavg[k]<avg:
+            if k>nums:
+                min_sep=int(new_bins[k]+1.)
+            break
     plt.axhline(y=avg, linewidth=1, color='b')
     plt.axhline(y=avg+rms, linewidth=1, color='b', linestyle='--')
     plt.axhline(y=avg-rms, linewidth=1, color='b', linestyle='--')
     plt.xlabel(xlabel)
     plt.annotate('Mean: '+str(round(avg,3)), xy=(xmax*0.8, avg*1.1),  xycoords='data', color='b')
     plt.annotate('RMS: '+str(round(rms,3)), xy=(xmax*0.8, (rms+avg)*1.1),  xycoords='data', color='b')
+    plt.errorbar(bins,yavg,fmt='.',color='k',linestyle='-',zorder=1e5)
     plt.axis([xmin,xmax,ymin,ymax])
     plt.ylabel(ylabel)
     plt.title(title)
     plt.savefig(plotname+'.png')
     plt.close()
+    return min_sep
 
 
 def extract_sky(vlss,min_flux,restfrq):
@@ -615,6 +668,23 @@ def plothist(x, name,filename,sigma,freq,p):
     plt.savefig('hist_'+filename+'_1gauss_'+str(freq)+'MHz.png')
     plt.close()
     return 10.**sigcut
+
+def plothist2(x, name,filename,freq):
+    print 'plotting: '+filename
+    hist_x=np.histogram(x,bins=200)
+    range_x=[hist_x[1][n]+(hist_x[1][n+1]-hist_x[1][n])/2. for n in range(len(hist_x[1])-1)]
+    plt.hist(x,bins=200,histtype='stepfilled')
+    plt.xlabel(name)
+    plt.xlim(1.,2.)
+#    plt.semilogy()
+    plt.ylabel('Number of images')
+#    ticks = np.arange(int(min(range_x)), int(max(range_x)+1.), 1)
+#    ticks = [int(n) for n in ticks]
+#    labels = [10.**x for x in ticks]
+#    plt.xticks(ticks, labels)
+    plt.savefig('hist_'+filename+'_1gauss_'+str(freq)+'MHz.png')
+    plt.close()
+    return
 
 
 opt = optparse.OptionParser()
