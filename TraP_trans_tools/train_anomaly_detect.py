@@ -24,29 +24,28 @@ def trial_data(args):
     data,sigma1,sigma2 = args
 
     # Sort data into transient and non-transient
-    xvals = [float(x[0]) for x in data if float(x[6]) != 0.]
-    yvals = [float(x[1]) for x in data if float(x[6]) != 0.]
-    xstable = [float(x[0]) for x in data if float(x[6]) == 0.]
-    ystable = [float(x[1]) for x in data if float(x[6]) == 0.]
+    xvals = [float(x[0]) for x in data if float(x[6]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    yvals = [float(x[1]) for x in data if float(x[6]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    xstable = [float(x[0]) for x in data if float(x[6]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    ystable = [float(x[1]) for x in data if float(x[6]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
 
     # Find the thresholds for a given sigma, by fitting data with a Gaussian model
-    sigcutx,paramx,range_x = generic_tools.get_sigcut([float(x[0]) for x in data],sigma1)
-    sigcuty,paramy,range_y = generic_tools.get_sigcut([float(x[1]) for x in data],sigma2)
+    sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],sigma1)
+    sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],sigma2)
 
     # Count up the different numbers of tn, tp, fp, fn
-    fp=len([z for z in range(len(xstable)) if (xstable[z]>sigcutx and ystable[z]>sigcuty)]) # False Positive
-    tn=len([z for z in range(len(xstable)) if (xstable[z]<sigcutx or ystable[z]<sigcuty)]) # True Negative
-    tp=len([z for z in range(len(xvals)) if (xvals[z]>sigcutx and yvals[z]>sigcuty)]) # True Positive
-    fn=len([z for z in range(len(xvals)) if (xvals[z]<sigcutx or yvals[z]<sigcuty)]) # False Negative
+    fp=len([z for z in range(len(xstable)) if (xstable[z]>10.**sigcutx and ystable[z]>10.**sigcuty)]) # False Positive
+    tn=len([z for z in range(len(xstable)) if (xstable[z]<10.**sigcutx or ystable[z]<10.**sigcuty)]) # True Negative
+    tp=len([z for z in range(len(xvals)) if (xvals[z]>10.**sigcutx and yvals[z]>10.**sigcuty)]) # True Positive
+    fn=len([z for z in range(len(xvals)) if (xvals[z]<10.**sigcutx or yvals[z]<10.**sigcuty)]) # False Negative
 
     # Use these values to calculate the precision and recall values
     precision, recall = generic_tools.precision_and_recall(tp,fp,fn)
-
     return [sigma1, sigma2, precision, recall]
 
 def multiple_trials(data):
     # Find the precision and recall for all combinations of the sigma thresholds
-    sigmas=np.arange(0,4.0,(4./20.))
+    sigmas=np.arange(0,4.0,(4./500.))
     pool = Pool(processes=4)              # start 4 worker processes
     inputs = range(2)
     for sigma1 in sigmas:
@@ -55,6 +54,7 @@ def multiple_trials(data):
         with open('sigma_data.txt','a') as f_handle:
             np.savetxt(f_handle,sigma_data)
         f_handle.close()
+    pool.close()
     return
 
 def find_best_sigmas(precis_thresh,recall_thresh,data):
@@ -74,7 +74,6 @@ def find_best_sigmas(precis_thresh,recall_thresh,data):
     temp = {str(a[0])+','+str(a[1]):(2*a[2]*a[3])/(a[2]+a[3]) for a in combinations}
     above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
     above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
-
     # Plot results
     # Settings
     nullfmt   = NullFormatter()         # no labels

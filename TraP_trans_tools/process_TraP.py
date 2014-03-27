@@ -1,4 +1,4 @@
-import format_LOFAR_data
+import format_TraP_data
 import plotting_tools
 import generic_tools
 import numpy as np
@@ -6,7 +6,7 @@ import sys
 
 # Obtain input parameters from the command line
 if len(sys.argv) != 6:
-    print 'python process_LOFAR.py <database> <dataset_id> <release> <sigma1> <sigma2>'
+    print 'python process_TraP.py <database> <dataset_id> <release> <sigma1> <sigma2>'
     exit()
 database = sys.argv[1]
 dataset_id = str(sys.argv[2])
@@ -14,7 +14,7 @@ release = str(sys.argv[3])
 sigma1 = float(sys.argv[4])
 sigma2 = float(sys.argv[5])
 
-# get LOFAR data from the database and sort it into the required array which is then loaded
+# get TraP data from the database and sort it into the required array which is then loaded
 format_LOFAR_data.format_data(database,dataset_id,release)
 trans_data=generic_tools.extract_data('ds'+str(dataset_id)+'_trans_data.txt')
 

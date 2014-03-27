@@ -1,14 +1,8 @@
 #!/usr/bin/env python
-"""A specific example of how one might access the MonetDB database.
-
-Try running with flag '--help' for information on the command line options.
-
+"""
+Tools to query the database to extract the transient and extracted source tables. Files saved in working directory as "ds_${dataset id}_transients.csv" and "ds_${dataset id}_sources.csv
 """
 
-import optparse
-import sys
-import tkp.config
-import os
 import tkp.config
 import tkp.db
 import csv
@@ -74,20 +68,6 @@ def dump_trans(dbname, dataset_id, engine, host, port):
     dump_list_of_dicts_to_csv(sources, outfile_prefix + 'sources.csv')
 
     return 0
-
-def handle_args():
-    """
-    Default values are defined here.
-    """
-    usage = """usage: %prog [options] dataset_id"""
-    parser = optparse.OptionParser(usage)
-
-    options, args = parser.parse_args()
-    if len(args) != 1:
-        parser.print_help()
-        sys.exit(1)
-    print "Grabbing data for dataset id:", args[0]
-    return options, int(args[0])
 
 def dump_list_of_dicts_to_csv(data, outfile):
     if data:

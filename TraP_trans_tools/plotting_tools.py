@@ -19,6 +19,8 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
 
     # Setting up the plot
     nullfmt   = NullFormatter()         # no labels
+    fontP = FontProperties()
+    fontP.set_size('x-small')
     col = make_colours(frequencies)
     left, width = 0.1, 0.65
     bottom, height = 0.1, 0.65
@@ -49,7 +51,7 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
         y=[data[n][1] for n in range(len(data))]
     axHistx.hist(x, bins=bins, normed=1, histtype='stepfilled', color='b')
     axHisty.hist(y, bins=bins, normed=1, histtype='stepfilled', orientation='horizontal', color='b')
-    axScatter.legend(frequencies,loc=4)
+    axScatter.legend(frequencies,loc=4, prop=fontP)
 
     # Plotting lines representing thresholds (unless no thresholds)
     if sigcutx != 0 or sigcuty != 0:
@@ -71,10 +73,10 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
     axHisty.axes.xaxis.set_ticklabels([])
     axHistx.set_xlim( axScatter.get_xlim() )
     axHisty.set_ylim( axScatter.get_ylim() )
-    xmin=int(min(x))
-    xmax=int(max(x))+5
-    ymin=int(min(y))
-    ymax=int(max(y))+1
+    xmin=int(min([data[n][0] for n in range(len(data))]))
+    xmax=int(max([data[n][0] for n in range(len(data))]))+1
+    ymin=int(min([data[n][1] for n in range(len(data))]))
+    ymax=int(max([data[n][1] for n in range(len(data))]))+1
     xvals=range(xmin,xmax)
     xtxts=[r'$10^{'+str(a)+'}$' for a in xvals]
     yvals=range(ymin,ymax)
@@ -102,16 +104,6 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
     fontP = FontProperties()
     fontP.set_size('x-small')
     fig.subplots_adjust(hspace = .001, wspace = 0.001)
-    ax1.set_yscale('log')
-    ax1.set_xscale('log')
-    ax2.set_yscale('log')
-    ax3.set_yscale('log')
-    ax3.set_xscale('log')
-    ax4.set_yscale('log')
-    ax1.xaxis.set_major_formatter(nullfmt)
-    ax4.yaxis.set_major_formatter(nullfmt)
-    ax2.xaxis.set_major_formatter(nullfmt)
-    ax2.yaxis.set_major_formatter(nullfmt)
     ax1.set_ylabel(r'$\eta_\nu$')
     ax3.set_ylabel(r'$V_\nu$')
     ax3.set_xlabel('Max Flux (Jy)')
@@ -144,29 +136,21 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
         ax4.axhline(y=10.**sigcut_Vnu, linewidth=2, color='k', linestyle='--')
 
     # Plotting settings
-    xmin_ax3=int(np.log10(min(xdata_ax3)))-1
-    xmax_ax3=int(np.log10(max(xdata_ax3)))+1
-    xmin_ax4=int(min(xdata_ax4))-1
-    xmax_ax4=int(max(xdata_ax4))+2
-    ymin_ax1=int(np.log10(min(ydata_ax1)))
-    ymax_ax1=int(np.log10(max(ydata_ax1)))+5
-    ymin_ax3=int(np.log10(min(ydata_ax3)))
-    ymax_ax3=int(np.log10(max(ydata_ax3)))+1
-    ax1.set_ylim(10.**(ymin_ax1),10.**(ymax_ax1))
-    ax3.set_ylim(10.**(ymin_ax3),10.**(ymax_ax3))
-    ax3.set_xlim(10.**(xmin_ax3),10.**(xmax_ax3))
-    ax4.set_xlim(xmin_ax4,xmax_ax4)
-    ax1.set_xlim( ax3.get_xlim() )
-    ax4.set_ylim( ax3.get_ylim() )
-    ax2.set_xlim( ax4.get_xlim() )
-    ax2.set_ylim( ax1.get_ylim() )
-    xvals_ax3=range(xmin_ax3,xmax_ax3)
+    xmin_ax3=int(np.log10(min([trans_data[x][2] for x in range(len(trans_data))])))-1
+    xmax_ax3=int(np.log10(max([trans_data[x][2] for x in range(len(trans_data))])))+0.5
+    xmin_ax4=int(np.log10(min([trans_data[x][3] for x in range(len(trans_data))])))-0.5
+    xmax_ax4=int(np.log10(max([trans_data[x][3] for x in range(len(trans_data))])))+0.5
+    ymin_ax1=int(np.log10(min([trans_data[x][0] for x in range(len(trans_data))])))-0.5
+    ymax_ax1=int(np.log10(max([trans_data[x][0] for x in range(len(trans_data))])))+1
+    ymin_ax3=int(np.log10(min([trans_data[x][1] for x in range(len(trans_data))])))-0.5
+    ymax_ax3=int(np.log10(max([trans_data[x][1] for x in range(len(trans_data))])))+1
+    xvals_ax3=range(int(xmin_ax3),int(xmax_ax3))
     xtxts_ax3=[r'$10^{'+str(a)+'}$' for a in xvals_ax3]
-    xvals_ax4=range(xmin_ax4,xmax_ax4)
-    xtxts_ax4=[str(a) for a in xvals_ax4]
-    yvals_ax1=range(ymin_ax1,ymax_ax1)
+    xvals_ax4=range(int(xmin_ax4),int(xmax_ax4))
+    xtxts_ax4=[r'$10^{'+str(a)+'}$' for a in xvals_ax4]
+    yvals_ax1=range(int(ymin_ax1),int(ymax_ax1))
     ytxts_ax1=[r'$10^{'+str(a)+'}$' for a in yvals_ax1]
-    yvals_ax3=range(ymin_ax3,ymax_ax3)
+    yvals_ax3=range(int(ymin_ax3),int(ymax_ax3))
     ytxts_ax3=[r'$10^{'+str(a)+'}$' for a in yvals_ax3]
     ax3.set_xticks([10.**x for x in xvals_ax3])
     ax3.set_xticklabels(xtxts_ax3)
@@ -176,6 +160,26 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
     ax1.set_yticklabels(ytxts_ax1)
     ax3.set_yticks([10.**y for y in yvals_ax3])
     ax3.set_yticklabels(ytxts_ax3)
+    ax1.set_yscale('log')
+    ax1.set_xscale('log')
+    ax2.set_yscale('log')
+    ax2.set_xscale('log')
+    ax3.set_yscale('log')
+    ax3.set_xscale('log')
+    ax4.set_yscale('log')
+    ax4.set_xscale('log')
+    ax1.set_ylim(10.**(ymin_ax1),10.**(ymax_ax1))
+    ax3.set_ylim(10.**(ymin_ax3),10.**(ymax_ax3))
+    ax3.set_xlim(10.**(xmin_ax3),10.**(xmax_ax3))
+    ax4.set_xlim(10.**(xmin_ax4),10.**(xmax_ax4))
+    ax1.set_xlim( ax3.get_xlim() )
+    ax4.set_ylim( ax3.get_ylim() )
+    ax2.set_xlim( ax4.get_xlim() )
+    ax2.set_ylim( ax1.get_ylim() )
+    ax1.xaxis.set_major_formatter(nullfmt)
+    ax4.yaxis.set_major_formatter(nullfmt)
+    ax2.xaxis.set_major_formatter(nullfmt)
+    ax2.yaxis.set_major_formatter(nullfmt)
     plt.savefig('ds'+str(dataset_id)+'_diagnostic_plots.png')
     plt.close()
 
