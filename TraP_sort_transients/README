@@ -4,6 +4,8 @@ Requirements:
 os, glob, sys, numpy, datetime, coords, math, matplotlib
 Access to TraP databases
 
+The coords module can be downloaded from here: https://pypi.python.org/pypi/astrolib.coords/0.39.5
+
 This script conducts an approximate check to see if all the newly detected sources are actually transients rather than sources which are hovering around the detection threshold in the worst images. This is a temporary solution until the TraP is able to keep track of the best RMS measured in a given region - then this check will be more accurate and automated.
 
 Instructions:
