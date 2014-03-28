@@ -112,6 +112,14 @@ generic_tools.py
 
   *Outputs:* precision, recall
 
+- **label_data**
+
+  *Inputs:* data, label1, label2
+
+  *Info:* Inserts label1 into the frequency column, typically a string which is the type of transient. Appends a new column with either ``1`` or ``0`` to represent ``transient`` and ``stable``.
+
+  *Outputs:* labelled data
+
 
 plotting_tools.py
 -----------------
@@ -162,14 +170,6 @@ train_anomaly_detect.py
 -----------------------
 *Requirements:* generic_tools, numpy, multiprocessing, scipy, operator, matplotlib, pylab
 
-- **label_data**
-
-  *Inputs:* data, label1, label2
-
-  *Info:* Inserts label1 into the frequency column, typically a string which is the type of transient. Appends a new column with either ``1`` or ``0`` to represent ``transient`` and ``stable``.
-
-  *Outputs:* labelled data
-
 - **trial_data**
 
   *Inputs:* data, sigma1, sigma2
@@ -195,7 +195,103 @@ train_anomaly_detect.py
 
 train_logistic_regression.py
 ----------------------------
-**TBC**
+*Requirements:* generic_tools, numpy, scipy, random, matplotlib, pylab
+
+- **shuffle_datasets**
+
+  *Inputs:* data
+
+  *Info:* Ensures that your data is randomised so that the training, validation and testing datasets do not contain too many of one kind of source.
+
+  *Outputs:* shuffled data
+
+- **create_datasets**
+
+  *Inputs:* data, number of training datapoints, number of validation datapoints
+
+  *Info:* splits the data array into 3, with the required number of datapoints. The number of testing datapoints constitutes the remaining data.
+
+  *Outputs:* training, validation and testing datasets
+
+- **create_X_y_arrays**
+
+  *Inputs:* data
+
+  *Info:* Splits the data into the parameters and labels (as required for the machine learning algorithm).
+
+  *Outputs:* parameters and labels
+
+- **sigmoid**
+
+  *Inputs:* value
+
+  *Info:* calculates the sigmoid of a given value (1/(1+e^(-z)))
+
+  *Outputs:* sigmoid(value)
+
+- **reg_cost_func**
+
+  *Inputs:* theta, X, y, lda
+
+  *Info:* Calculates the regularised cost function for a given model (theta) and dataset. The lda (lambda) parameter regularises it, i.e. controls the weighting given to multiple parameters.
+
+  *Outputs:* cost of the model
+
+- **quadratic_features**
+
+  *Inputs:* data
+
+  *Info:* can double the number of parameters in the model by squaring them. i.e. [x1, x2] becomes [x1, x2, x1^2, x2^2].
+
+  *Outputs:* quadratic data
+
+- **learning_curve**
+
+  *Inputs:* Xtrain, ytrain, Xvalid, yvalid, lda, options for scipy.optimise
+
+  *Info:* finds the optimal model for a given training set and calculates the training and validation errors for that model. The training set starts with 1 datapoint and is incremented by 1 until the full training set is used. This test can check that the model is converging.
+
+  *Outputs:* training and validation errors, theta
+
+- **check_error**
+
+  *Inputs:* X, y, theta
+
+  *Info:* measures the classification error for a given dataset and model.
+
+  *Outputs:* error
+
+- **validation_curve**
+
+  *Inputs:* Xtrain, ytrain, Xvalid, yvalid, options for scipy.optimise
+
+  *Info:* Uses a range of lambda values (1e-5 to 1e5) input into the training algorithm to check that the data is not being overfitted by the model and can be used to chose the optimal lambda value.
+
+  *Outputs:* training and validation errors, lambda values, optimal lambda
+
+- **plotLC**
+
+  *Inputs:* error_train, error_val, fname, xlog (True/False), ylog (True/False), xlabel
+
+  *Info:* A plotting algorthm used to create figures showing the training and validation errors. Here is an `example <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples/machine_learning_curve_learning.png>`_ 
+
+- **classify_data**
+
+  *Inputs:* X, y, theta
+
+  *Info:* Classifies a given dataset and then compares to the predictions to identify the true positives, false postives, true negatives and false negatives
+
+  *Outputs:* tp, fp, fn, tn, classified data
+
+- **predict**
+
+  *Inputs:* X, theta
+
+  *Info:* Predicts the classification of new, unknown data.
+
+  *Outputs:* predicted classifications
+
+
 
 train_TraP.py
 -------------
@@ -203,10 +299,16 @@ train_TraP.py
 
 An example executable script for processing TraP data. Usage:
 
-``python train_TraP.py <precision threshold> <recall threshold>``
+``python train_TraP.py <precision threshold> <recall threshold> <lda> <anomaly> <logistic>``
 
 <precision threshold>: required precision of transient identification (1 - False Detection Rate). A probability in the range 0-1 
 
 <recall threshold>: required recall, i.e. the probability that all transients are found (0-1)
 
-This script uses pre-processed datasets, in the format output by ``format_trap_data.format_data``. The stable sources are in a file named "stable_trans_data.txt". Transient sources are in files "sim_${transient type}_trans_data.txt" where transient type is a short string describing the type of transient source (used for labelling sources in diagnostic plots instead of the frequency parameter). The script trains both the anomaly detection algorithm and logistic regression algorithm, outputting diagnostic plots. The anomaly detection algorithm outputs the best transient search thresholds for use in e.g. TraP, while the logistic regression algorithm outputs an equation that can classify sources. Each method reports its precision and recall. Example training files and output plots are given `here <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples>`_ 
+<lda>: the lambda value to be used in the logistic regression algorithm
+
+<anomaly>: train anomaly detection algorithm? T/F (if F give 0 for both the precision and recall thresholds)
+
+<logistic>: train logistic regression algorithm? T/F (if F give 0 for lda)
+
+This script uses pre-processed datasets, in the format output by ``format_trap_data.format_data``. The stable sources are in a file named "stable_trans_data.txt". Transient sources are in files "sim_${transient type}_trans_data.txt" where transient type is a short string describing the type of transient source (used for labelling sources in diagnostic plots instead of the frequency parameter). The script trains both the anomaly detection algorithm and logistic regression algorithm, outputting diagnostic plots. The anomaly detection algorithm outputs the best transient search thresholds for use in e.g. TraP, while the logistic regression algorithm outputs an equation that can classify sources. Each method reports its precision and recall. Example training files and output plots are given `here <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples>`_

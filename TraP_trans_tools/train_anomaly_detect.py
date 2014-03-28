@@ -4,20 +4,13 @@ from multiprocessing import Pool
 from scipy.interpolate import griddata
 import operator
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pylab
 pylab.rcParams['legend.loc'] = 'best'
 from matplotlib.ticker import NullFormatter
 from matplotlib.font_manager import FontProperties
 
-
-def label_data(data,label1,label2):
-    # Label different arrays so that their transient type is known and they have a transient (1) or non-transient (0) label
-    for x in data:
-        x[5]=label1
-    data=np.matrix(data)
-    data=np.c_[data,[label2]*len(data)]
-    return data.tolist()
 
 def trial_data(args):
     # Find the precision and recall for a given pair of thresholds

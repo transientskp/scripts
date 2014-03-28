@@ -35,3 +35,11 @@ def precision_and_recall(tp,fp,fn):
         precision=float(tp)/float(tp+fp)
     recall=float(tp)/float(tp+fn)
     return precision, recall
+
+def label_data(data,label1,label2):
+    # Label different arrays so that their transient type is known and they have a transient (1) or non-transient (0) label
+    for x in data:
+        x[5]=label1
+    data=np.matrix(data)
+    data=np.c_[data,[label2]*len(data)]
+    return data.tolist()
