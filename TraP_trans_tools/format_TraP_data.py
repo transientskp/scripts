@@ -1,15 +1,15 @@
 from dump_trans_data_v1 import dump_trans
 import generic_tools
 
-def get_data(database, dataset_id, release):
+def get_data(database, dataset_id, release, host, port):
 #
 # Calls a function to dump the image data from the TraP database into a CSV file
 #
     if release == '1m':
-        dump_trans(database,dataset_id, 'monetdb', 'heastrodb', 52000)
+        dump_trans(database,dataset_id, 'monetdb', host, port)
         return
     elif release == '1p':
-        dump_trans(database,dataset_id, 'postgresql', 'heastrodb', 5432)
+        dump_trans(database,dataset_id, 'postgresql', host, port)
         return
     else:
         print 'This script is for either Release 1 MonetDB (1m) or Release 1 Postgres (1p) databases, please specify 1m or 1p.'
@@ -55,8 +55,8 @@ def collate_trans_data(new_source,frequencies,transients):
     print 'Number of transients in sample: '+str(len(trans_data))
     return trans_data
 
-def format_data(database, dataset_id, release):
-    get_data(database, dataset_id, release)
+def format_data(database, dataset_id, release,host,port):
+    get_data(database, dataset_id, release,host,port)
     transients = generic_tools.extract_data('ds_'+str(dataset_id)+'_transients.csv')
     sources = generic_tools.extract_data('ds_'+str(dataset_id)+'_sources.csv')
     frequencies, new_source = read_src_lc(sources)

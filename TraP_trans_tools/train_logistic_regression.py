@@ -94,9 +94,8 @@ def validation_curve(X, y, Xval, yval,options):
             lda=lambda_vec[i]
     return error_train, error_val, lambda_vec, lda
 
-def plotLC(error_train, error_val, fname, xlog, ylog, xlabel):
+def plotLC(num, error_train, error_val, fname, xlog, ylog, xlabel):
     plt.figure()
-    num=len(error_train)
     plt.plot(num, error_train, 'b-')
     plt.plot(num, error_val, 'g-')
     if ylog:
@@ -107,7 +106,7 @@ def plotLC(error_train, error_val, fname, xlog, ylog, xlabel):
     plt.ylabel('Error')
     plt.axis([min(num)*0.8, max(num)*1.2, 1e-5,1e-0])
     plt.legend(['training', 'validation'], loc=4)
-    plt.savefig('machine_learning_curve_'+fname+'.png')
+    plt.savefig('LR_'+fname+'_curve.png')
     plt.close()
     return
 
