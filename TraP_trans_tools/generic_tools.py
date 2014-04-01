@@ -25,7 +25,7 @@ def get_sigcut(x,sigma):
     if sigma != 0:
         sigcut = param[1]*sigma+param[0]
     else:
-        sigcut = 0
+        sigcut = param[0]
     return sigcut,param,range_x
 
 def precision_and_recall(tp,fp,fn):
