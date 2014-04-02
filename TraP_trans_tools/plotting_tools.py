@@ -44,9 +44,9 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
             axScatter.scatter(xdata, ydata,color='0.75', s=5., zorder=1)           
         else:
             axScatter.scatter(xdata, ydata,color=col[i], s=5.)
-    if 'stable' in frequencies:
-        x=[data[n][0] for n in range(len(data)) if data[n][2]=='stable']
-        y=[data[n][1] for n in range(len(data)) if data[n][2]=='stable']
+    if 'stable' in frequencies or 'FP' in frequencies:
+        x=[data[n][0] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN')]
+        y=[data[n][1] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN')]
     else:
         x=[data[n][0] for n in range(len(data))]
         y=[data[n][1] for n in range(len(data))]

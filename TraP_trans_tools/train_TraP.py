@@ -95,7 +95,7 @@ if anomaly:
     frequencies = generic_tools.get_frequencies(data)
 
     # Create the scatter_hist plot
-    plotting_tools.create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,'results',frequencies)
+    plotting_tools.create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,'_ADresults',frequencies)
     
     # Create arrays containing the data to plot
     fp=[[float(z[0]),float(z[1]),float(z[2]),float(z[3]),'FP'] for z in stable if (float(z[0])>10.**sigcutx and float(z[1])>10.**sigcuty)] # False Positive

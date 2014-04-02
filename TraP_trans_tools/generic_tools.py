@@ -22,10 +22,7 @@ def get_sigcut(x,sigma):
     x=[float(i) for i in x]
     param=norm.fit(x)
     range_x=np.linspace(min(x),max(x),1000)
-    if sigma != 0:
-        sigcut = param[1]*sigma+param[0]
-    else:
-        sigcut = param[0]
+    sigcut = param[1]*sigma+param[0]
     return sigcut,param,range_x
 
 def precision_and_recall(tp,fp,fn):

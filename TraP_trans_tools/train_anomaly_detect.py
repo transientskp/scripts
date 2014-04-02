@@ -15,7 +15,7 @@ from matplotlib.font_manager import FontProperties
 def trial_data(args):
     # Find the precision and recall for a given pair of thresholds
     data,sigma1,sigma2 = args
-
+    
     # Sort data into transient and non-transient
     xvals = [float(x[0]) for x in data if float(x[6]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
     yvals = [float(x[1]) for x in data if float(x[6]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
@@ -23,8 +23,8 @@ def trial_data(args):
     ystable = [float(x[1]) for x in data if float(x[6]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
 
     # Find the thresholds for a given sigma, by fitting data with a Gaussian model
-    sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],sigma1)
-    sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],sigma2)
+    sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[6]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma1)
+    sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[6]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma2)
 
     # Count up the different numbers of tn, tp, fp, fn
     fp=len([z for z in range(len(xstable)) if (xstable[z]>10.**sigcutx and ystable[z]>10.**sigcuty)]) # False Positive
@@ -38,7 +38,7 @@ def trial_data(args):
 
 def multiple_trials(data):
     # Find the precision and recall for all combinations of the sigma thresholds
-    sigmas=np.arange(0,4.0,(4./500.))
+    sigmas=np.arange(0.,4.0,(4./500.))
     pool = Pool(processes=4)              # start 4 worker processes
     inputs = range(2)
     for sigma1 in sigmas:
@@ -51,7 +51,7 @@ def multiple_trials(data):
     return
 
 def check_method_works(xi,yi,zi1,zi2, data):
-    trials = np.arange(0.,1.,1./500.)
+    trials = np.arange(0.,1.,1./100.)
     Z1=[]
     Z2=[]
     X=[]
@@ -136,7 +136,7 @@ def find_best_sigmas(precis_thresh,recall_thresh,data,tests):
     temp = {str(a[0])+','+str(a[1]):(2*a[2]*a[3])/(a[2]+a[3]) for a in combinations}
     above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
     above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
-    
+
     if tests:
         check_method_works(xi,yi,zi1,zi2,data)
 
