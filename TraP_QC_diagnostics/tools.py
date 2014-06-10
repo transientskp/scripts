@@ -5,7 +5,7 @@
 # E-mail: b.a.rowlinson@uva.nl
 #
 from datetime import datetime
-import coords as C
+import tkp.utility.coordinates as coords
 from scipy.stats import norm
 from scipy.optimize import leastsq
 import numpy as np
@@ -50,20 +50,23 @@ def extract_data(dataset_id, CasA, CygA, VirA):
         theoretical=float(row[2].split(' ')[8].split('(')[1].split(')')[0].strip()) # Theoretical noise limit
         ratio=float(row[2].split(' ')[4].strip()) # Observed RMS / Theoretical noise (calculated by TraP)
         rms=theoretical*ratio # Image RMS
-        pc = C.Position((float(row[1]), float(row[0]))) # Position of the image centre
+        pc = [float(row[1]), float(row[0])]
          # Separation of image centre relative to A-Team sources
-        posdif_CasA=float(str(CasA.angsep(pc)).split(' degrees')[0])
-        posdif_CygA=float(str(CygA.angsep(pc)).split(' degrees')[0])
-        posdif_VirA=float(str(VirA.angsep(pc)).split(' degrees')[0])
-        # Input data into array: [RA, Dec, Obs date, Obs Freq, RMS noise, Theoretical noise, RMS/Theoretical, Restoring beam ellipticity, Seperation CasA, Seperation CygA, Seperation VirA, Image name]
-        image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,ellipticity,posdif_CasA,posdif_CygA,posdif_VirA,image])
+        posdif_CasA=coords.angsep(CasA[0],CasA[1],pc[0],pc[1])/3600.
+        posdif_CygA=coords.angsep(CygA[0],CygA[1],pc[0],pc[1])/3600.
+        posdif_VirA=coords.angsep(VirA[0],VirA[1],pc[0],pc[1])/3600.
+        # Input data into array: [RA, Dec, Obs date, Obs Freq, RMS noise, Theoretical noise, RMS/Theoretical, Restoring beam ellipticity, Seperation CasA, Seperation CygA, Seperation VirA, Image name, BMaj]
+        image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,ellipticity,posdif_CasA,posdif_CygA,posdif_VirA,image,float(row[5])])
     return image_info, frequencies
 
 def fit_hist(data, sigma, xlabel, pltname, freq):
 # fit a Gaussian distribution to the input data, output a plot and threshold for a given sigma
-    p=guess_p(data)
-    mean, rms, threshold = plothist(data, xlabel, pltname, sigma,freq, p)
-    return mean, rms, threshold
+    if len(data) > 0:
+        p=guess_p(data)
+        mean, rms, threshold = plothist(data, xlabel, pltname, sigma,freq, p)
+        return mean, rms, threshold
+    else:
+        return 0,0,0
 
 def res(p, y, x):
 # calculate residuals between data and Gaussian model
@@ -90,14 +93,17 @@ def plothist(x, name,filename,sigma,freq,p):
 #
 # Create a histogram of the data and fit a Gaussian distribution to it
 #
-    hist_x=np.histogram(x,bins=200) # histogram of data
+    hist_x=np.histogram(x,bins=50) # histogram of data
     range_x=[hist_x[1][n]+(hist_x[1][n+1]-hist_x[1][n])/2. for n in range(len(hist_x[1])-1)]
-    plt.hist(x,bins=200,histtype='stepfilled')
+    plt.hist(x,bins=50,histtype='stepfilled')
     plsq = leastsq(res, p, args = (hist_x[0], range_x)) # fit Gaussian to data
     fit2 = plsq[0][2]*norm2(range_x, plsq[0][0], plsq[0][1]) # create Gaussian distribution for plotting on graph
     plt.plot(range_x,fit2, 'r-', linewidth=3)
     sigcut=plsq[0][0]+plsq[0][1]*sigma # threshold defined as (mean + RMS * sigma)
     plt.axvline(x=sigcut, linewidth=2, color='k',linestyle='--')
+    xvals=range(int(min(x)-1.),int(max(x)+1.))
+    xlabs=[r"$10^{"+str(a)+"}$" for a in xvals]
+    plt.xticks(xvals,xlabs)
     plt.xlabel(name)
     plt.ylabel('Number of images')
     plt.savefig(filename+'_'+str(freq)+'MHz.png')
@@ -173,31 +179,39 @@ def extract_sky(vlss_sources,restfrq,frq):
         A2 = 0
         if len(nums)>10 and ']' in nums[10]: A2 = float(nums[10].split(']')[0])
         if A2 == 0:
-            new=float(nums[4])*(np.power(restfrq,A1))/(np.power(frq,A1))
+            new=float(nums[4])*(np.power(restfrq,A1))/(np.power(float(frq),A1))
         else:
-            new=float(nums[4])*((np.power(restfrq,A1))+(np.power((restfrq*restfrq),A2)))/((np.power(frq,A1))+(np.power((frq*frq),A2)))
-        srcs_vlss.append([C.Position(position),new])
+            new=float(nums[4])*((np.power(restfrq,A1))+(np.power((restfrq*restfrq),A2)))/((np.power(float(frq),A1))+(np.power((float(frq)*float(frq)),A2)))
+        ra_tmp = nums[2].split(':')
+        dec_tmp = dec.split(':')
+        # Fix for rounding errors in the gsm.py skymodel which give the number of seconds as 60.
+        if int(float(dec_tmp[2])) == 60:
+            dec_tmp[2]=59.999
+        if int(float(ra_tmp[2])) == 60:
+            ra_tmp[2]=59.999
+        position = [coords.hmstora(int(float(ra_tmp[0])),int(float(ra_tmp[1])),int(float(ra_tmp[2]))), coords.dmstodec(int(float(dec_tmp[0])),int(float(dec_tmp[1])),int(float(dec_tmp[2])))]
+        srcs_vlss.append([position,new])
     return srcs_vlss
 
-def source_assoc(srcs_vlss,srcs_pyse):
-    intflxrat=np.zeros(len(srcs_pyse))
+def source_assoc(srcs_vlss,srcs_pyse,bmaj):
+    intflxrat=[]
     if len(srcs_pyse) > 0:
         for a in range(len(srcs_pyse)):
-            posdif_old=1000000
+            posdif_old=bmaj*5.*3600.
             for b in range(len(srcs_vlss)):
-                posdif=srcs_pyse[a][1].angsep(srcs_vlss[b][0])
+                posdif = coords.angsep(srcs_pyse[a][1][0],srcs_pyse[a][1][1],srcs_vlss[b][0][0],srcs_vlss[b][0][1])
                 if posdif < posdif_old:
                     posdif_old = posdif
-                    intflxrat[a]=float(srcs_pyse[a][2])/float(srcs_vlss[b][1])
+                    intflxrat.append([float(srcs_pyse[a][2]),float(srcs_pyse[a][2])/float(srcs_vlss[b][1])])
     return intflxrat
 
-def find_avg_int_flx_rat(srcs_vlss,srcs_pyse):
-    intflxrat=source_assoc(srcs_vlss,srcs_pyse)
+def find_avg_int_flx_rat(srcs_vlss,srcs_pyse,bmaj):
+    intflxrat=source_assoc(srcs_vlss,srcs_pyse,bmaj)
     if len(intflxrat)==0:
         return 0.0, 0.0
     else:
-        avgintflxrat = sum(intflxrat)/float(len(intflxrat))
-        rms = math.sqrt((sum(n*n - (avgintflxrat*avgintflxrat) for n in intflxrat))/len(intflxrat))
+        avgintflxrat = np.mean([x[1] for x in intflxrat])
+        rms = np.std([x[1] for x in intflxrat]) # math.sqrt((sum(n*n - (avgintflxrat*avgintflxrat) for n in intflxrat))/len(intflxrat))
         return avgintflxrat, rms
 
 def extr_src_data(dataset_id):
@@ -206,6 +220,7 @@ def extr_src_data(dataset_id):
     for lines in data:
         lines=lines.rstrip()
         src_data=lines.split(',')
-        sources.append([(src_data[9].split('/'))[-1]+'.fits',C.Position((float(src_data[11]),float(src_data[10]))),src_data[3],src_data[4]])
+        if src_data[3]=='0':
+            sources.append([(src_data[10].split('/'))[-1]+'.fits',[float(src_data[12]),float(src_data[11])],src_data[4],src_data[5]])
     data.close()
     return sources

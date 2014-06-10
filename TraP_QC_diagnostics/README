@@ -1,11 +1,9 @@
 Usage: python TraP_QC_diagnostics.py <database> <dataset_id> <release> <sigma> <plt_freqs> <dataset_id2>
 
 Requirements:
-gsm.py, os, glob, sys, numpy, datetime, coords, math, matplotlib
+gsm.py, os, glob, sys, numpy, datetime, math, matplotlib, tkp
 tools.py
 Access to TraP databases via dump_image_data_v1.py
-
-The coords module can be downloaded from here: https://pypi.python.org/pypi/astrolib.coords/0.39.5
 
 Instructions:
 

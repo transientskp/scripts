@@ -7,7 +7,7 @@
 
 import sys
 import tools
-import coords as C
+import tkp.utility.coordinates as coords
 import numpy as np
 import math
 import os
@@ -24,9 +24,9 @@ sigma = float(sys.argv[4])
 plt_freqs = sys.argv[5]
 dataset_id2 = str(sys.argv[6])
 # A-Team positions
-CasA=C.Position((350.866417,58.811778))
-CygA=C.Position((299.868153,40.733916))
-VirA=C.Position((187.705930,12.391123))
+CasA=[350.866417,58.811778]
+CygA=[299.868153,40.733916]
+VirA=[187.705930,12.391123]
 
 min_sep=0. # The absolute minimum allowed separation from the A-Team source, set to zero to enable the code to work independently
 
@@ -40,30 +40,32 @@ image_info, frequencies = tools.extract_data(dataset_id, CasA, CygA, VirA)
 
 freq='all'
 # RMS noise properties
-noise_avg_log, noise_scatter_log, noise_threshold_log = tools.fit_hist([np.log10(image_info[n][4]) for n in range(len(image_info))], sigma, r'log$_{10}$(Observed RMS (Jy))', 'ds'+dataset_id+'_rms', freq)
+noise_avg_log, noise_scatter_log, noise_threshold_log = tools.fit_hist([np.log10(image_info[n][4]) for n in range(len(image_info))], sigma, r'Observed RMS (Jy)', 'ds'+dataset_id+'_rms', freq)
 noise_avg=10.**(noise_avg_log)
 noise_max=10.**(noise_avg_log+noise_scatter_log)-10.**(noise_avg_log)
 noise_min=10.**(noise_avg_log)-10.**(noise_avg_log-noise_scatter_log)
 print 'Average RMS Noise in images (1 sigma range, frequency='+str(freq)+' MHz): '+str(round(noise_avg*1e3,1))+' (+'+str(round(noise_max*1e3,1))+',-'+str(round(noise_min*1e3,1))+') mJy'
 # RMS/Theoretical limit for TraP
-ratio_avg_log, ratio_scatter_log, ratio_threshold_log = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info))], sigma, r'log$_{10}$(Observed RMS / Theoretical Noise)', 'ds'+dataset_id+'_ratio', freq)
+ratio_avg_log, ratio_scatter_log, ratio_threshold_log = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info))], sigma, r'Observed RMS / Theoretical Noise', 'ds'+dataset_id+'_ratio', freq)
 ratio_avg=10.**(ratio_avg_log)
 ratio_threshold = round((10.**ratio_threshold_log),1)
+ratio_threshold2 = round((10.**((ratio_avg_log - ratio_threshold_log)+ratio_avg_log)),1)
 print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg,1))
 print '######## Recommended TraP high_bound threshold: '+str(ratio_threshold)
+print '######## Recommended TraP low_bound threshold: '+str(ratio_threshold2)
 
 tools.plotfig_scatter(image_info, 7, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy)', 'ds'+dataset_id+'_theoretical_ellipticity_'+str(freq)+'MHz')
 
 if plt_freqs == 'T':
     for freq in frequencies:
         # RMS noise properties
-        noise_avg_log_tmp, noise_scatter_log_tmp, noise_threshold_log_tmp = tools.fit_hist([np.log10(image_info[n][4]) for n in range(len(image_info)) if image_info[n][3]==freq], sigma, r'log$_{10}$(Observed RMS (Jy))', 'ds'+dataset_id+'_rms', freq)
+        noise_avg_log_tmp, noise_scatter_log_tmp, noise_threshold_log_tmp = tools.fit_hist([np.log10(image_info[n][4]) for n in range(len(image_info)) if image_info[n][3]==freq], sigma, r'Observed RMS (Jy)', 'ds'+dataset_id+'_rms', freq)
         noise_avg_tmp=10.**(noise_avg_log_tmp)
         noise_max_tmp=10.**(noise_avg_log_tmp+noise_scatter_log_tmp)-10.**(noise_avg_log_tmp)
         noise_min_tmp=10.**(noise_avg_log_tmp)-10.**(noise_avg_log_tmp-noise_scatter_log_tmp)
         print 'Average RMS Noise in images (1 sigma range, frequency='+str(freq)+' MHz): '+str(round(noise_avg_tmp*1e3,1))+' (+'+str(round(noise_max_tmp*1e3,1))+',-'+str(round(noise_min_tmp*1e3,1))+') mJy'
         # RMS/Theoretical limit for TraP
-        ratio_avg_log_tmp, ratio_scatter_log_tmp, ratio_threshold_log_tmp = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info)) if image_info[n][3]==freq], sigma, r'log$_{10}$(Observed RMS / Theoretical Noise)', 'ds'+dataset_id+'_ratio', freq)
+        ratio_avg_log_tmp, ratio_scatter_log_tmp, ratio_threshold_log_tmp = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info)) if image_info[n][3]==freq], sigma, r'Observed RMS / Theoretical Noise', 'ds'+dataset_id+'_ratio', freq)
         ratio_avg_tmp=10.**(ratio_avg_log_tmp)
         print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg_tmp,1))
 
@@ -71,7 +73,8 @@ if plt_freqs == 'T':
 rms2=[image_info[x][7] for x in range(len(image_info))]
 avg_rms2=(sum(rms2)/len(rms2))
 rms_rms2=math.sqrt((sum(n*n-(avg_rms2*avg_rms2) for n in rms2))/len(rms2))
-ellipticity_threshold=round(avg_rms2+rms_rms2,2)
+ellipticity_threshold=round(avg_rms2+sigma*rms_rms2,2)
+print 'Average ellipticity: '+str(round(avg_rms2,2))+' +/- '+str(round(rms_rms2,2))
 print '######## Recommended TraP ellipticity threshold: '+str(ellipticity_threshold)
 
 image_info_clip1 = [image_info[n] for n in range(len(image_info)) if image_info[n][6] < ratio_threshold if image_info[n][7] < ellipticity_threshold]
@@ -87,9 +90,11 @@ for ateam in ['CasA', 'CygA', 'VirA']:
 print '######## Recommended TraP min seperation from A-Team sources (degrees): '+str(min_sep)
 
 image_info_clip2 = [image_info_clip1[n] for n in range(len(image_info_clip1)) if image_info_clip1[n][8] > min_sep if image_info_clip1[n][9] > min_sep if image_info_clip1[n][10] > min_sep]
-tools.plotfig_scatter(image_info_clip2, 7, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy)', 'ds'+dataset_id+'_theoretical_ellipticity_'+str(freq)+'MHz_Final')
+tools.plotfig_scatter(image_info_clip2, 7, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy)', 'ds'+dataset_id+'_theoretical_ellipticity_allMHz_Final')
 
 print 'Total images: '+str(len(image_info))+' After first clip: '+str(len(image_info_clip1))+' ('+str(int(round(100.*(float(len(image_info_clip1))/float(len(image_info))),0)))+'%) After second clip: '+str(len(image_info_clip2))+' ('+str(int(round(100.*(float(len(image_info_clip2))/float(len(image_info))),0)))+'%)'
+
+np.savetxt("ds"+str(dataset_id)+"_image_info.csv", image_info, fmt='%s', delimiter=",")
 
 ###################### IMAGES AVAILABLE? ######################
 
@@ -100,6 +105,7 @@ if dataset_id2=='N':
 avg_flxrat=[]
 sources = tools.extr_src_data(dataset_id2)
 sky_data={}
+flux_data=[]
 for img in [x for x in image_info_clip2]:
     srcs=[x for x in sources if x[0] == img[11]]
     skymodel=str(int(round(float(img[1]),0)))+'_'+str(int(round(float(img[0]),0)))+'.sky'
@@ -122,8 +128,11 @@ for img in [x for x in image_info_clip2]:
         vlss_data.close()
         sky_data[skymodel_key]=vlss_sources
     vlss=tools.extract_sky(sky_data[skymodel_key],img[3],frq)
-    flx, flxrms = tools.find_avg_int_flx_rat(vlss,srcs)
-    avg_flxrat.append([img[4],flx,img[3]])
+    tmp= tools.source_assoc(vlss,srcs,img[-1])
+    for t in range(len(tmp)):
+        flux_data.append([img[2],img[3],tmp[t][0], tmp[t][1]])
+    flxrat, flxrms = tools.find_avg_int_flx_rat(vlss,srcs,img[-1])
+    avg_flxrat.append([img[4],flxrat,img[3]])
 freq='all'
 flx_avg_log_tmp, flx_scatter_log_tmp, flx_threshold_log_tmp = tools.fit_hist([x[1] for x in avg_flxrat if x[1]!=0.], 0.0, r'Average (Flux / Corrected Skymodel Flux)', 'ds'+dataset_id+'_flux', freq)
 print 'Average Flux Ratio: '+str(flx_avg_log_tmp)+' +/-'+str(flx_scatter_log_tmp)
@@ -133,3 +142,5 @@ if plt_freqs == 'T':
         tools.plotfig_scatter([x for x in avg_flxrat if x[2] == freq if x[1]!=0.], 0, 1, 'RMS (Jy)', 'Average(Flux / Corrected Skymodel Flux)', 'ds'+dataset_id+'_flux_'+str(freq)+'MHz_Final')
         flx_avg_log_tmp, flx_scatter_log_tmp, flx_threshold_log_tmp = tools.fit_hist([x[1] for x in avg_flxrat if x[1]!=0. if x[2]==freq], 0.0, r'Average (Flux / Corrected Skymodel Flux)', 'ds'+dataset_id+'_flux', freq)
         print 'Average Flux Ratio ('+str(freq)+' MHz): '+str(flx_avg_log_tmp)+' +/-'+str(flx_scatter_log_tmp)
+
+np.savetxt("ds"+str(dataset_id)+"_flux_info.csv", flux_data, fmt='%s', delimiter=",")
