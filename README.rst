@@ -55,5 +55,8 @@ Contents
 `TraP_source_overview <https://github.com/transientskp/scripts/tree/master/TraP_QC_plots>`_
     Creates plots of the transient parameters for all sources in a dataset.
 
+`Tidy_Miriad <https://github.com/transientskp/scripts/tree/master/Tidy_Miriad>`_
+    Inserts the required fits header fields which are missing in Miriad images. The images can then be processed by tkp-inject.py and TraP.
+
 `uvw <https://github.com/transientskp/scripts/tree/master/uvw>`_
     Calculate the UVW coordinates of a given baseline.
