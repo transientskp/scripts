@@ -58,5 +58,8 @@ Contents
 `Tidy_Miriad <https://github.com/transientskp/scripts/tree/master/Tidy_Miriad>`_
     Inserts the required fits header fields which are missing in Miriad images. The images can then be processed by tkp-inject.py and TraP.
 
+`Tidy_Mosaic <https://github.com/transientskp/scripts/tree/master/Tidy_Mosaic>`_
+    Inserts the required fits header fields which are missing in the LOFAR mosaic images. The images can then be processed by tkp-inject.py and TraP.
+
 `uvw <https://github.com/transientskp/scripts/tree/master/uvw>`_
     Calculate the UVW coordinates of a given baseline.
