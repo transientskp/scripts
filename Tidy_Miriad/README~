@@ -1,0 +1,27 @@
+Usage: python TraP_QC_diagnostics.py <database> <dataset_id> <release> <sigma> <plt_freqs> <dataset_id2>
+
+Requirements:
+gsm.py, os, glob, sys, numpy, datetime, coords, math, matplotlib
+tools.py
+Access to TraP databases via dump_image_data_v1.py
+
+Instructions:
+
+1. If you are NOT using heastro1, you will need to edit the script tools.py to give the correct path to your dataset in the function tools.get_data.
+2. Run TraP on your restored.corr images and force it to reject all images (in quality_check.parset set "high_bound=1"). Note the database you are using and the dataset_id.
+3. If you want to check the fluxes relative to the skymodel predictions, run TraP again, using appropriate quality control settings, to extract sources in all the images (n.b. you can also do your transient search at the same time). Note the second dataset_id.
+4. You are now ready to run this script. Go to ${your_working_folder} and run: 
+    python TraP_QC_diagnostics.py <database> <dataset_id> <release> <sigma> <plt_freqs> <dataset_id2>
+
+    <database>        : The name of the TraP database you are using
+    <dataset_id>      : The dataset containing all the images rejected (i.e. step 2)
+    <release>	      : The release and database (e.g. 1m is release 1 monetdb and 1p is postgres)
+    <sigma>	      : The sigma clipping to be used for the RMS highbound, 2 sigma is typically used for LOFAR data (when the distribution typically deviates from Gaussian)
+    <plt_freqs>	      : T/F - the option to plot all QC plots for individual frequencies
+    <dataset_id2>     : The dataset containing all the extracted sources for the images - if you do not have this yet (to get the QC settings for step 3) use N instead of a dataset ID.
+
+   Output on the terminal are the recommended TraP QC settings and some properties of your dataset.
+   In the working folder, a number of png images are output which show an overview of your dataset.
+   Note this script may take a significant amount of time to run if you are using the extracted sources (running gsm.py) - so I recommend running it in a screen.
+
+Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl
