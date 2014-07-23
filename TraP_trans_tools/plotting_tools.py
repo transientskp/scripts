@@ -38,18 +38,26 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
 
     # Plotting data
     for i in range(len(frequencies)):
-        xdata=[data[n][0] for n in range(len(data)) if data[n][2]==frequencies[i]]
-        ydata=[data[n][1] for n in range(len(data)) if data[n][2]==frequencies[i]]
+        xdata_var=[data[n][0] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='2']
+        ydata_var=[data[n][1] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='2']
+        xdata_tran=[data[n][0] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='1']
+        ydata_tran=[data[n][1] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='1']
+        xdata_pos=[data[n][0] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='0']
+        ydata_pos=[data[n][1] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='0']
         if frequencies[i]=='stable':
-            axScatter.scatter(xdata, ydata,color='0.75', s=5., zorder=1)           
+            axScatter.scatter(xdata_var, ydata_var,color='0.75', s=5., zorder=1)           
+            axScatter.scatter(xdata_tran, ydata_tran,color='0.75', s=5., zorder=1, marker='*')           
+            axScatter.scatter(xdata_pos, ydata_pos,color='0.75', s=5., zorder=1, marker='v')           
         else:
-            axScatter.scatter(xdata, ydata,color=col[i], s=5.)
+            axScatter.scatter(xdata_var, ydata_var,color=col[i], s=5.)
+            axScatter.scatter(xdata_tran, ydata_tran,color=col[i], s=5., marker='*')           
+            axScatter.scatter(xdata_pos, ydata_pos,color=col[i], s=5., marker='v')           
     if 'stable' in frequencies or 'FP' in frequencies:
-        x=[data[n][0] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN')]
-        y=[data[n][1] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN')]
+        x=[data[n][0] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN') if data[n][-1]=='2']
+        y=[data[n][1] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN') if data[n][-1]=='2']
     else:
-        x=[data[n][0] for n in range(len(data))]
-        y=[data[n][1] for n in range(len(data))]
+        x=[data[n][0] for n in range(len(data)) if data[n][-1]=='2']
+        y=[data[n][1] for n in range(len(data)) if data[n][-1]=='2']
     axHistx.hist(x, bins=bins, normed=1, histtype='stepfilled', color='b')
     axHisty.hist(y, bins=bins, normed=1, histtype='stepfilled', orientation='horizontal', color='b')
     axScatter.legend(frequencies,loc=4, prop=fontP)

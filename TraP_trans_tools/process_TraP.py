@@ -33,8 +33,8 @@ frequencies = generic_tools.get_frequencies(data)
 # Create the scatter_hist plot
 plotting_tools.create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,dataset_id,frequencies)
 
-# make second array for the diagnostic plot: [eta_nu, V_nu, maxflx_nu, flxrat_nu, nu]
-data2=[[float(trans_data[n][1]),float(trans_data[n][3]),float(trans_data[n][4]),float(trans_data[n][5]),trans_data[n][6]] for n in range(len(trans_data)) if float(trans_data[n][1]) > 0 if float(trans_data[n][3]) > 0] 
+# make second array for the diagnostic plot: [eta_nu, V_nu, maxflx_nu, flxrat_nu, nu, trans_type]
+data2=[[float(trans_data[n][1]),float(trans_data[n][3]),float(trans_data[n][4]),float(trans_data[n][5]),trans_data[n][6], trans_data[n][-1]] for n in range(len(trans_data)) if float(trans_data[n][1]) > 0 if float(trans_data[n][3]) > 0] 
 
 # Create the diagnostic plot
 plotting_tools.create_diagnostic(data2,sigcutx,sigcuty,frequencies,dataset_id)
