@@ -47,6 +47,7 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
             ,rc.dataset
             ,rc.wm_ra
             ,rc.wm_decl
+            ,im.band
             ,rf.avg_f_int
             ,rf.avg_f_int_sq
             ,im.freq_eff

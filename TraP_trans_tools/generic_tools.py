@@ -6,7 +6,7 @@ def extract_data(filename):
     data=open(filename,'r')
     for lines in data:
         if not lines.startswith("#"):
-            lines=lines.rstrip()
+            lines=lines.rstrip().replace(" ", "")
             info.append(lines.split(','))
     data.close()
     return info

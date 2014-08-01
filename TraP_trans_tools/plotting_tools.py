@@ -8,6 +8,7 @@ import pylab
 pylab.rcParams['legend.loc'] = 'best'
 from matplotlib.ticker import NullFormatter
 from matplotlib.font_manager import FontProperties
+import generic_tools
 
 def make_colours(frequencies):
     cm = matplotlib.cm.get_cmap('jet')
@@ -58,6 +59,8 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
     else:
         x=[data[n][0] for n in range(len(data)) if data[n][-1]=='2']
         y=[data[n][1] for n in range(len(data)) if data[n][-1]=='2']
+    print data[0]
+    print x[0]
     axHistx.hist(x, bins=bins, normed=1, histtype='stepfilled', color='b')
     axHistx.hist(x, bins=generic_tools.bayesian_blocks(x), normed=1, histtype='step', color='k')
     axHisty.hist(y, bins=bins, normed=1, histtype='stepfilled', orientation='horizontal', color='b')

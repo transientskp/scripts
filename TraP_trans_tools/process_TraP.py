@@ -21,10 +21,8 @@ sigma2 = float(sys.argv[9])
 # get TraP data from the database and sort it into the required array which is then loaded
 format_TraP_data.format_data(database,dataset_id,release,host,port,username,password)
 trans_data=generic_tools.extract_data('ds'+str(dataset_id)+'_trans_data.txt')
-
 # make first array for the scatter_hist plot: [log10(eta_nu), log10(V_nu), nu]
-data=[[np.log10(float(trans_data[n][1])),np.log10(float(trans_data[n][3])),trans_data[n][6]] for n in range(len(trans_data)) if float(trans_data[n][1]) > 0 if float(trans_data[n][3]) > 0]
-
+data=[[np.log10(float(trans_data[n][1])),np.log10(float(trans_data[n][3])),trans_data[n][6], trans_data[n][-1]] for n in range(len(trans_data)) if float(trans_data[n][1]) > 0 if float(trans_data[n][3]) > 0]
 # Find the thresholds for a given sigma (in log space)
 sigcutx,paramx,range_x = generic_tools.get_sigcut([a[0] for a in data],sigma1)
 sigcuty,paramy,range_y = generic_tools.get_sigcut([a[1] for a in data],sigma2)

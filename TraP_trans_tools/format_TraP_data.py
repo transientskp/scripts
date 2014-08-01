@@ -20,8 +20,8 @@ def read_src_lc(sources):
     new_source={}
     frequencies=[]
     for a in range(len(sources)):
-        new_runcat=sources[a][6]
-        new_freq=int((float(sources[a][5])/1e6)+0.5)
+        new_runcat=sources[a][7]
+        new_freq=int((float(sources[a][6])/1e6)+0.5)
         if new_runcat != runcat:
             runcat=new_runcat
             new_source[runcat]=[sources[a]]
@@ -41,17 +41,17 @@ def collate_trans_data(new_source,frequencies,transients):
             date=[]
             band=[]
             for b in range(len(new_source[keys])):
-                if int((float(new_source[keys][b][5])/1e6)+0.5)==freq:
-                    band.append(new_source[keys][b][11])
-                    flux.append(float(new_source[keys][b][3]))
-                    flux_err.append(float(new_source[keys][b][4]))
+                if int((float(new_source[keys][b][6])/1e6)+0.5)==freq:
+                    band.append(new_source[keys][b][2])
+                    flux.append(float(new_source[keys][b][4]))
+                    flux_err.append(float(new_source[keys][b][5]))
             bands[freq]=band
     ### Calculate the ratios...
             avg_flux_ratio = [x/(sum(flux)/len(flux)) for x in flux]
     ### Collate and store the transient parameters (these are across all the pipeline runs for the final figures)
             for n in range(len(transients)):
                 if keys == transients[n][2] and transients[n][0] in bands[freq]:
-                    trans_data.append([keys, transients[n][1], float(transients[n][5]), float(transients[n][3]), max(flux), max(avg_flux_ratio),freq,len(flux),transients[n][4]])
+                    trans_data.append([keys, transients[n][1], float(transients[n][3]), float(transients[n][5]), max(flux), max(avg_flux_ratio),freq,len(flux),transients[n][4]])
     print 'Number of transients in sample: '+str(len(trans_data))
     return trans_data
 
