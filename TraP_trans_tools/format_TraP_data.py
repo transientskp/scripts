@@ -1,18 +1,18 @@
 from dump_trans_data_v1 import dump_trans
 import generic_tools
 
-def get_data(database, dataset_id, release, host, port):
+def get_data(database, dataset_id, release, host, port, user, pword):
 #
 # Calls a function to dump the image data from the TraP database into a CSV file
 #
-    if release == '1m':
-        dump_trans(database,dataset_id, 'monetdb', host, port)
+    if release == 'm':
+        dump_trans(database,dataset_id, 'monetdb', host, port, user, pword)
         return
-    elif release == '1p':
-        dump_trans(database,dataset_id, 'postgresql', host, port)
+    elif release == 'p':
+        dump_trans(database,dataset_id, 'postgresql', host, port, user, pword)
         return
     else:
-        print 'This script is for either Release 1 MonetDB (1m) or Release 1 Postgres (1p) databases, please specify 1m or 1p.'
+        print 'This script is for either MonetDB (m) or Postgres (p) databases, please specify m or p.'
         exit()
 
 def read_src_lc(sources):

@@ -5,19 +5,21 @@ import numpy as np
 import sys
 
 # Obtain input parameters from the command line
-if len(sys.argv) != 8:
-    print 'python process_TraP.py <database> <dataset_id> <release> <host> <port> <sigma1> <sigma2>'
+if len(sys.argv) != 10:
+    print 'python process_TraP.py <database> <username> <password> <dataset_id> <release> <host> <port> <sigma1> <sigma2>'
     exit()
 database = sys.argv[1]
-dataset_id = str(sys.argv[2])
-release = str(sys.argv[3])
-host = str(sys.argv[4])
-port = int(sys.argv[5])
-sigma1 = float(sys.argv[6])
-sigma2 = float(sys.argv[7])
+username = sys.argv[2]
+password = sys.argv[3]
+dataset_id = str(sys.argv[4])
+release = str(sys.argv[5])
+host = str(sys.argv[6])
+port = int(sys.argv[7])
+sigma1 = float(sys.argv[8])
+sigma2 = float(sys.argv[9])
 
 # get TraP data from the database and sort it into the required array which is then loaded
-format_TraP_data.format_data(database,dataset_id,release,host,port)
+format_TraP_data.format_data(database,dataset_id,release,host,port,username,password)
 trans_data=generic_tools.extract_data('ds'+str(dataset_id)+'_trans_data.txt')
 
 # make first array for the scatter_hist plot: [log10(eta_nu), log10(V_nu), nu]

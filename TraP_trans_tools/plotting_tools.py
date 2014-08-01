@@ -59,6 +59,7 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
         x=[data[n][0] for n in range(len(data)) if data[n][-1]=='2']
         y=[data[n][1] for n in range(len(data)) if data[n][-1]=='2']
     axHistx.hist(x, bins=bins, normed=1, histtype='stepfilled', color='b')
+    axHistx.hist(x, bins=generic_tools.bayesian_blocks(x), normed=1, histtype='step', color='k')
     axHisty.hist(y, bins=bins, normed=1, histtype='stepfilled', orientation='horizontal', color='b')
     axScatter.legend(frequencies,loc=4, prop=fontP)
 

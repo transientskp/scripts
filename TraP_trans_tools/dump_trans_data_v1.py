@@ -7,9 +7,9 @@ import tkp.config
 import tkp.db
 import csv
 
-def dump_trans(dbname, dataset_id, engine, host, port):
+def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
     tkp.db.Database(
-        database=dbname, user=dbname, password=dbname,
+        database=dbname, user=user, password=pword,
         engine=engine, host=host, port=port
     )
 
