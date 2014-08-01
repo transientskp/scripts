@@ -47,24 +47,30 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
         ydata_pos=[data[n][1] for n in range(len(data)) if data[n][2]==frequencies[i] if data[n][-1]=='0']
         if frequencies[i]=='stable':
             axScatter.scatter(xdata_var, ydata_var,color='0.75', s=5., zorder=1)           
-            axScatter.scatter(xdata_tran, ydata_tran,color='0.75', s=5., zorder=1, marker='*')           
-            axScatter.scatter(xdata_pos, ydata_pos,color='0.75', s=5., zorder=1, marker='v')           
+  #           axScatter.scatter(xdata_tran, ydata_tran,color='0.75', s=5., zorder=1, marker='*')           
+   #          axScatter.scatter(xdata_pos, ydata_pos,color='0.75', s=5., zorder=1, marker='v')           
         else:
             axScatter.scatter(xdata_var, ydata_var,color=col[i], s=5.)
-            axScatter.scatter(xdata_tran, ydata_tran,color=col[i], s=5., marker='*')           
-            axScatter.scatter(xdata_pos, ydata_pos,color=col[i], s=5., marker='v')           
+  #           axScatter.scatter(xdata_tran, ydata_tran,color=col[i], s=5., marker='*')           
+   #          axScatter.scatter(xdata_pos, ydata_pos,color=col[i], s=5., marker='v')           
     if 'stable' in frequencies or 'FP' in frequencies:
         x=[data[n][0] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN') if data[n][-1]=='2']
         y=[data[n][1] for n in range(len(data)) if (data[n][2]=='stable' or data[n][2]=='FP' or data[n][2]=='TN') if data[n][-1]=='2']
     else:
         x=[data[n][0] for n in range(len(data)) if data[n][-1]=='2']
         y=[data[n][1] for n in range(len(data)) if data[n][-1]=='2']
-    print data[0]
-    print x[0]
-    axHistx.hist(x, bins=bins, normed=1, histtype='stepfilled', color='b')
-    axHistx.hist(x, bins=generic_tools.bayesian_blocks(x), normed=1, histtype='step', color='k')
-    axHisty.hist(y, bins=bins, normed=1, histtype='stepfilled', orientation='horizontal', color='b')
+    axHistx.hist(x, bins=bins, normed=1, histtype='step', color='k')
+    axHistx.hist(x, bins=generic_tools.bayesian_blocks(x), normed=1, histtype='stepfilled', color='b')
+    axHisty.hist(y, bins=bins, normed=1, histtype='step', orientation='horizontal', color='k')
+    axHisty.hist(y, bins=generic_tools.bayesian_blocks(y), normed=1, histtype='stepfilled', orientation='horizontal', color='b')
     axScatter.legend(frequencies,loc=4, prop=fontP)
+    for i in range(len(frequencies)):
+        if frequencies[i]=='stable':
+            axScatter.scatter(xdata_tran, ydata_tran,color='0.75', s=5., zorder=1, marker='*')           
+            axScatter.scatter(xdata_pos, ydata_pos,color='0.75', s=5., zorder=1, marker='v')           
+        else:
+            axScatter.scatter(xdata_tran, ydata_tran,color=col[i], s=5., marker='*')           
+            axScatter.scatter(xdata_pos, ydata_pos,color=col[i], s=5., marker='v')           
 
     # Plotting lines representing thresholds (unless no thresholds)
     if sigcutx != 0 or sigcuty != 0:
@@ -79,6 +85,9 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
     fit2=norm.pdf(range_y,loc=paramy[0],scale=paramy[1])
     axHisty.plot(fit2, range_y, 'k:', linewidth=2)
 
+    print(r'Gaussian Fit $\eta$: '+str(round(10.**paramx[0],2))+'(+'+str(round((10.**(paramx[0]+paramx[1])-10.**paramx[0]),2))+' -'+str(round((10.**(paramx[0]-paramx[1])-10.**paramx[0]),2))+')')
+    print(r'Gaussian Fit $V$: '+str(round(10.**paramy[0],2))+'(+'+str(round((10.**(paramy[0]+paramy[1])-10.**paramy[0]),2))+' -'+str(round((10.**(paramy[0]-paramy[1])-10.**paramy[0]),2))+')')
+    
     # Final plot settings
     axHistx.xaxis.set_major_formatter(nullfmt)
     axHisty.yaxis.set_major_formatter(nullfmt)
