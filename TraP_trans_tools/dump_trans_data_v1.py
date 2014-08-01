@@ -17,8 +17,12 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
     #in tkp.database.utils.generic, without any knowledge of SQL.
     #But for the data requested here it's much easier to use proper queries.
     transients_query = """\
-    SELECT  tr.*
-           ,rc.dataset
+    SELECT  tr.runcat
+           ,tr.band
+           ,tr.v_int
+           ,tr.eta_int
+           ,tr.siglevel
+           ,tr.transient_type
            ,rc.wm_ra
            ,rc.wm_decl
     FROM transient tr
