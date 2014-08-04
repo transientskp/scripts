@@ -85,8 +85,8 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
     fit2=norm.pdf(range_y,loc=paramy[0],scale=paramy[1])
     axHisty.plot(fit2, range_y, 'k:', linewidth=2)
 
-    print(r'Gaussian Fit $\eta$: '+str(round(10.**paramx[0],2))+'(+'+str(round((10.**(paramx[0]+paramx[1])-10.**paramx[0]),2))+' -'+str(round((10.**(paramx[0]-paramx[1])-10.**paramx[0]),2))+')')
-    print(r'Gaussian Fit $V$: '+str(round(10.**paramy[0],2))+'(+'+str(round((10.**(paramy[0]+paramy[1])-10.**paramy[0]),2))+' -'+str(round((10.**(paramy[0]-paramy[1])-10.**paramy[0]),2))+')')
+    print(r'Gaussian Fit $\eta$: '+str(round(10.**paramx[0],2))+'(+'+str(round((10.**(paramx[0]+paramx[1])-10.**paramx[0]),2))+' '+str(round((10.**(paramx[0]-paramx[1])-10.**paramx[0]),2))+')')
+    print(r'Gaussian Fit $V$: '+str(round(10.**paramy[0],2))+'(+'+str(round((10.**(paramy[0]+paramy[1])-10.**paramy[0]),2))+' '+str(round((10.**(paramy[0]-paramy[1])-10.**paramy[0]),2))+')')
     
     # Final plot settings
     axHistx.xaxis.set_major_formatter(nullfmt)
@@ -134,10 +134,10 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
 
     # Plotting data
     for i in range(len(frequencies)):
-        xdata_ax3=[trans_data[x][2] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i]]
-        xdata_ax4=[trans_data[x][3] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i]]
-        ydata_ax1=[trans_data[x][0] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i]]
-        ydata_ax3=[trans_data[x][1] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i]]
+        xdata_ax3=[trans_data[x][2] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i] if data[n][-1]=='2']
+        xdata_ax4=[trans_data[x][3] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i] if data[n][-1]=='2']
+        ydata_ax1=[trans_data[x][0] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i] if data[n][-1]=='2']
+        ydata_ax3=[trans_data[x][1] for x in range(len(trans_data)) if trans_data[x][4]==frequencies[i] if data[n][-1]=='2']
         if frequencies[i]=='stable':
             ax1.scatter(xdata_ax3, ydata_ax1,color='0.75', s=5., zorder=1)
             ax2.scatter(xdata_ax4, ydata_ax1,color='0.75', s=5., zorder=1)

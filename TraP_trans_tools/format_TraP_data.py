@@ -51,20 +51,21 @@ def collate_trans_data(new_source,frequencies,transients):
     ### Collate and store the transient parameters (these are across all the pipeline runs for the final figures)
             for n in range(len(transients)):
                 if keys == transients[n][2] and transients[n][0] in bands[freq]:
-                    trans_data.append([keys, transients[n][1], float(transients[n][3]), float(transients[n][5]), max(flux), max(avg_flux_ratio),freq,len(flux),transients[n][4]])
+                    trans_data.append([keys, transients[n][1], float(transients[n][3]), float(transients[n][5]), max(flux), max(avg_flux_ratio),freq,len(flux),transients[n][-1], transients[n][-2], transients[n][4]])
     print 'Number of transients in sample: '+str(len(trans_data))
     return trans_data
 
 def format_data(database, dataset_id, release,host,port, user, pword):
-    get_data(database, dataset_id, release,host,port, user, pword)
+    if not os.path.isfile('ds_'+str(dataset_id)+'_transients.csv'):
+        get_data(database, dataset_id, release,host,port, user, pword)
     transients = generic_tools.extract_data('ds_'+str(dataset_id)+'_transients.csv')
     sources = generic_tools.extract_data('ds_'+str(dataset_id)+'_sources.csv')
     frequencies, new_source = read_src_lc(sources)
     trans_data = collate_trans_data(new_source,frequencies,transients)
     output3 = open('ds'+str(dataset_id)+'_trans_data.txt','w')
-    output3.write('#Runcat_id, eta_nu, signif, V_nu, flux, fluxrat, freq, dpts, trans_type \n')
+    output3.write('#Runcat_id, eta_nu, signif, V_nu, flux, fluxrat, freq, dpts, RA, Dec, trans_type \n')
     for x in range(len(trans_data)):
-        string='%s' % ', '.join(str(val) for val in trans_data[x])
+        string='%s' % ','.join(str(val) for val in trans_data[x])
         output3.write(string+'\n')
     output3.close()
     print 'Data extracted and saved'

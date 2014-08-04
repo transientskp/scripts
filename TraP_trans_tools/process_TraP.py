@@ -19,7 +19,8 @@ sigma1 = float(sys.argv[8])
 sigma2 = float(sys.argv[9])
 
 # get TraP data from the database and sort it into the required array which is then loaded
-format_TraP_data.format_data(database,dataset_id,release,host,port,username,password)
+if not os.path.isfile('ds'+str(dataset_id)+'_trans_data.txt'):
+    format_TraP_data.format_data(database,dataset_id,release,host,port,username,password)
 trans_data=generic_tools.extract_data('ds'+str(dataset_id)+'_trans_data.txt')
 # make first array for the scatter_hist plot: [log10(eta_nu), log10(V_nu), nu]
 data=[[np.log10(float(trans_data[n][1])),np.log10(float(trans_data[n][3])),trans_data[n][6], trans_data[n][-1]] for n in range(len(trans_data)) if float(trans_data[n][1]) > 0 if float(trans_data[n][3]) > 0]
