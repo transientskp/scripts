@@ -17,14 +17,14 @@ def trial_data(args):
     data,sigma1,sigma2 = args
     
     # Sort data into transient and non-transient
-    xvals = [float(x[0]) for x in data if float(x[6]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
-    yvals = [float(x[1]) for x in data if float(x[6]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
-    xstable = [float(x[0]) for x in data if float(x[6]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
-    ystable = [float(x[1]) for x in data if float(x[6]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    xvals = [float(x[0]) for x in data if float(x[-1]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    yvals = [float(x[1]) for x in data if float(x[-1]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    xstable = [float(x[0]) for x in data if float(x[-1]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
+    ystable = [float(x[1]) for x in data if float(x[-1]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
 
     # Find the thresholds for a given sigma, by fitting data with a Gaussian model
-    sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[6]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma1)
-    sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[6]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma2)
+    sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[-1]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma1)
+    sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[-1]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma2)
 
     # Count up the different numbers of tn, tp, fp, fn
     fp=len([z for z in range(len(xstable)) if (xstable[z]>10.**sigcutx and ystable[z]>10.**sigcuty)]) # False Positive
