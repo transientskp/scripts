@@ -1,5 +1,6 @@
 from dump_trans_data_v1 import dump_trans
 import generic_tools
+import os
 
 def get_data(database, dataset_id, release, host, port, user, pword):
 #

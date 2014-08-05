@@ -10,18 +10,17 @@ import pylab
 pylab.rcParams['legend.loc'] = 'best'
 from matplotlib.ticker import NullFormatter
 from matplotlib.font_manager import FontProperties
+import os
 
 
 def trial_data(args):
     # Find the precision and recall for a given pair of thresholds
     data,sigma1,sigma2 = args
-    
     # Sort data into transient and non-transient
     xvals = [float(x[0]) for x in data if float(x[-1]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
     yvals = [float(x[1]) for x in data if float(x[-1]) != 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
     xstable = [float(x[0]) for x in data if float(x[-1]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
     ystable = [float(x[1]) for x in data if float(x[-1]) == 0.  if float(x[0]) > 0. if float(x[1]) > 0.]
-
     # Find the thresholds for a given sigma, by fitting data with a Gaussian model
     sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[-1]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma1)
     sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[-1]) == 0. if float(x[0]) > 0. if float(x[1]) > 0.],sigma2)
@@ -38,8 +37,8 @@ def trial_data(args):
 
 def multiple_trials(data):
     # Find the precision and recall for all combinations of the sigma thresholds
-    sigmas=np.arange(0.,4.0,(4./500.))
-    pool = Pool(processes=4)              # start 4 worker processes
+    sigmas=np.arange(0.,4.0,(4./200.))
+    pool = Pool(processes=8)              # start 8 worker processes
     inputs = range(2)
     for sigma1 in sigmas:
         print sigma1
@@ -50,38 +49,54 @@ def multiple_trials(data):
     pool.close()
     return
 
+def tests(args):
+    xi,yi,zi1,zi2, data, precis, recall = args
+    print precis, recall
+    combinations=[[xi[a][b],yi[a][b],zi1[a][b],zi2[a][b]] for a in range(len(zi1)) for b in range(len(zi1[0])) if zi1[a][b]>precis if zi2[a][b]>recall]
+    temp = {str(a[0])+','+str(a[1]):(2*a[2]*a[3])/(a[2]+a[3]) for a in combinations}
+    above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
+    above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
+    # Sort data into transient and non-transient
+    xvals = [float(x[0]) for x in data if float(x[2]) != 0.]
+    yvals = [float(x[1]) for x in data if float(x[2]) != 0.]
+    xstable = [float(x[0]) for x in data if float(x[2]) == 0.]
+    ystable = [float(x[1]) for x in data if float(x[2]) == 0.]
+    # Find the thresholds for a given sigma, by fitting data with a Gaussian model
+    sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],above_thresh_sigma[0])
+    sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],above_thresh_sigma[1])
+    # Count up the different numbers of tn, tp, fp, fn
+    fp=len([z for z in range(len(xstable)) if (xstable[z]>sigcutx and ystable[z]>sigcuty)]) # False Positive
+    #tn=len([z for z in range(len(xstable)) if (xstable[z]<sigcutx or ystable[z]<sigcuty)]) # True Negative
+    tp=len([z for z in range(len(xvals)) if (xvals[z]>sigcutx and yvals[z]>sigcuty)]) # True Positive
+    fn=len([z for z in range(len(xvals)) if (xvals[z]<sigcutx or yvals[z]<sigcuty)]) # False Negative
+    # Use these values to calculate the precision and recall values
+    results1, results2 = generic_tools.precision_and_recall(tp,fp,fn)
+    return [precis, recall, results1, results2]
+
 def check_method_works(xi,yi,zi1,zi2, data):
     trials = np.arange(0.,1.,1./100.)
     Z1=[]
     Z2=[]
     X=[]
     Y=[]
-    for precis in trials:
-        for recall in trials:
-            combinations=[[xi[a][b],yi[a][b],zi1[a][b],zi2[a][b]] for a in range(len(zi1)) for b in range(len(zi1[0])) if zi1[a][b]>precis if zi2[a][b]>recall]
-            temp = {str(a[0])+','+str(a[1]):(2*a[2]*a[3])/(a[2]+a[3]) for a in combinations}
-            above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
-            above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
-            # Sort data into transient and non-transient
-            xvals = [float(x[0]) for x in data if float(x[2]) != 0.]
-            yvals = [float(x[1]) for x in data if float(x[2]) != 0.]
-            xstable = [float(x[0]) for x in data if float(x[2]) == 0.]
-            ystable = [float(x[1]) for x in data if float(x[2]) == 0.]
-            # Find the thresholds for a given sigma, by fitting data with a Gaussian model
-            sigcutx,paramx,range_x = generic_tools.get_sigcut([np.log10(float(x[0])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],above_thresh_sigma[0])
-            sigcuty,paramy,range_y = generic_tools.get_sigcut([np.log10(float(x[1])) for x in data if float(x[0]) > 0. if float(x[1]) > 0.],above_thresh_sigma[1])
-            # Count up the different numbers of tn, tp, fp, fn
-            fp=len([z for z in range(len(xstable)) if (xstable[z]>sigcutx and ystable[z]>sigcuty)]) # False Positive
-            tn=len([z for z in range(len(xstable)) if (xstable[z]<sigcutx or ystable[z]<sigcuty)]) # True Negative
-            tp=len([z for z in range(len(xvals)) if (xvals[z]>sigcutx and yvals[z]>sigcuty)]) # True Positive
-            fn=len([z for z in range(len(xvals)) if (xvals[z]<sigcutx or yvals[z]<sigcuty)]) # False Negative
-            # Use these values to calculate the precision and recall values
-            results1, results2 = generic_tools.precision_and_recall(tp,fp,fn)
-            X.append(precis)
-            Y.append(recall)
-            Z1.append(results1)
-            Z2.append(results2)
-    xi,yi = np.mgrid[0:1:2000j, 0:1:2000j]
+
+    if not os.path.exists('anomaly_test_data.txt'):
+        open('anomaly_test_data.txt','w').close()
+        pool = Pool(processes=8)              # start 8 worker processes
+        inputs = range(2)
+        for precis in trials:
+            print precis
+            test_data = pool.map(tests, [(xi,yi,zi1,zi2, data, precis, recall) for recall in trials])
+            X.append([x[0] for x in test_data])
+            Y.append([x[1] for x in test_data])
+            Z1.append([x[2] for x in test_data])
+            Z2.append([x[3] for x in test_data])
+            with open('anomaly_test_data.txt','a') as f_handle:
+                np.savetxt(f_handle,test_data)
+            f_handle.close()
+        pool.close()
+    print("Anomaly Detection test data collated, now gridding")
+    xi,yi = np.mgrid[0:1:1000j, 0:1:1000j]
     zi1 = griddata((X, Y), Z1, (xi, yi), method='cubic')
     zi2 = griddata((X, Y), Z2, (xi, yi), method='cubic')
     # Plot results
@@ -125,7 +140,7 @@ def find_best_sigmas(precis_thresh,recall_thresh,data,tests):
     Y=[float(x[1]) for x in data]
     Z1=[float(x[2]) for x in data]
     Z2=[float(x[3]) for x in data]
-    xi,yi = np.mgrid[0:4:2000j, 0:4:2000j]
+    xi,yi = np.mgrid[0:4:1000j, 0:4:1000j]
     zi1 = griddata((X, Y), Z1, (xi, yi), method='cubic', fill_value=1.)
     zi2 = griddata((X, Y), Z2, (xi, yi), method='cubic', fill_value=0.)
     # Find all the combinations of x and y which are above the two thresholds
@@ -137,9 +152,9 @@ def find_best_sigmas(precis_thresh,recall_thresh,data,tests):
     above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
     above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
 
-    if tests:
-        check_method_works(xi,yi,zi1,zi2,data)
-
+    print("Best sigmas found, entering tests... (if applicable)")
+    
+    
     # Plot results
     # Settings
     nullfmt   = NullFormatter()         # no labels
@@ -173,6 +188,9 @@ def find_best_sigmas(precis_thresh,recall_thresh,data,tests):
     ax2.axhline(y=above_thresh_sigma[1], linewidth=2, color='k', linestyle='--')
     plt.savefig('sim_precisions_and_recalls.png')
     plt.close()
+
+    if tests:
+        check_method_works(xi,yi,zi1,zi2,data)
 
     return above_thresh_sigma[0],above_thresh_sigma[1]
 

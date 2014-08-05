@@ -3,6 +3,7 @@ import plotting_tools
 import generic_tools
 import numpy as np
 import sys
+import os
 
 # Obtain input parameters from the command line
 if len(sys.argv) != 10:
