@@ -39,6 +39,7 @@ def dump_images(dbname,dataset_id, dataset_id2, engine, host, port):
       ORDER BY im.id
     """
     cursor = tkp.db.execute(sources_query, (dataset_id,))
+    print cursor
     sources = tkp.db.generic.get_db_rows_as_dicts(cursor)
     print "Found", len(sources), "images"
     outfile_prefix = './ds_' + str(dataset_id) + '_'
@@ -59,6 +60,7 @@ def dump_images(dbname,dataset_id, dataset_id2, engine, host, port):
             ,rf.avg_f_int_sq
             ,im.freq_eff
             ,im.url
+            ,ex.extract_type
     FROM extractedsource ex
          ,assocxtrsource ax
          ,image im
