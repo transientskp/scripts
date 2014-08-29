@@ -12,9 +12,9 @@ import tkp.config
 import tkp.db
 import csv
 
-def dump_images(dbname,dataset_id, dataset_id2, engine, host, port):
+def dump_images(dbname,username,password,dataset_id, dataset_id2, engine, host, port):
     tkp.db.Database(
-        database=dbname, user=dbname, password=dbname,
+        database=dbname, user=username, password=password,
         engine=engine, host=host, port=port
     )
 
@@ -28,6 +28,7 @@ def dump_images(dbname,dataset_id, dataset_id2, engine, host, port):
             ,sr.centre_ra
             ,sr.centre_decl
             ,r.comment
+            ,im.rms_qc
     FROM image im
          ,rejectreason rr
          ,rejection r
@@ -39,11 +40,36 @@ def dump_images(dbname,dataset_id, dataset_id2, engine, host, port):
       ORDER BY im.id
     """
     cursor = tkp.db.execute(sources_query, (dataset_id,))
-    print cursor
     sources = tkp.db.generic.get_db_rows_as_dicts(cursor)
     print "Found", len(sources), "images"
     outfile_prefix = './ds_' + str(dataset_id) + '_'
     dump_list_of_dicts_to_csv(sources, outfile_prefix + 'images.csv')
+
+    if len(sources)==0:
+        print "No quality control steps completed, not LOFAR images?"
+        print "Querying without rejection tables"
+        sources_query = """\
+        SELECT  im.id
+            ,im.freq_eff
+            ,im.url
+            ,im.taustart_ts
+            ,im.rb_smaj
+            ,im.rb_smin
+            ,sr.centre_ra
+            ,sr.centre_decl
+            ,im.rms_qc
+        FROM image im
+            ,skyregion sr
+        WHERE im.dataset = %s
+        AND im.skyrgn=sr.id                                                                                                                                 
+        ORDER BY im.id
+        """
+        cursor = tkp.db.execute(sources_query, (dataset_id,))
+        sources = tkp.db.generic.get_db_rows_as_dicts(cursor)
+        print "Found", len(sources), "images"
+        sources = [dict(list(x.items())+[('comment','')]) for x in sources]
+        outfile_prefix = './ds_' + str(dataset_id) + '_'
+        dump_list_of_dicts_to_csv(sources, outfile_prefix + 'images.csv')
 
     if dataset_id2!='N':
         sources_query = """\

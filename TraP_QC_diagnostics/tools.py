@@ -16,19 +16,20 @@ import matplotlib.pyplot as plt
 import dump_image_data_v1
 from dump_image_data_v1 import dump_images
 
-def get_data(database, dataset_id, dataset_id2, release):
+def get_data(database, username, password, host, port, databaseType, dataset_id, dataset_id2):
 #
 # Calls a function to dump the image data from the TraP database into a CSV file
 #
-    if release == '1m':
-        dump_images(database,dataset_id, dataset_id2, 'monetdb', 'heastrodb', 52000)
-        return
-    elif release == '1p':
-        dump_images(database,dataset_id, dataset_id2, 'postgresql', 'heastrodb', 5432)
-        return
-    else:
-        print 'This script is for either Release 1 MonetDB (1m) or Release 1 Postgres (1p) databases, please specify 1m or 1p.'
-        exit()
+    dump_images(database, username, password, dataset_id, dataset_id2, databaseType, host, port)
+#    if release == '1m':
+#        dump_images(database,dataset_id, dataset_id2, 'monetdb', 'heastrodb', 52000)
+#        return
+#    elif release == '1p':
+#        dump_images(database,dataset_id, dataset_id2, 'postgresql', 'heastrodb', 5432)
+#        return
+#    else:
+#        print 'This script is for either Release 1 MonetDB (1m) or Release 1 Postgres (1p) databases, please specify 1m or 1p.'
+#        exit()
 
 def extract_data(dataset_id, CasA, CygA, VirA):
 #
@@ -39,25 +40,30 @@ def extract_data(dataset_id, CasA, CygA, VirA):
     list_img = image_data.readlines()
     image_data.close()
     frequencies=[]
+    plt_ratios=True
     for lines in list_img: # Loop through all the images
         row=lines.split(',')
-        image=row[8].split('/')[-1].rstrip()+'.fits' # Image name
-        date=datetime.strptime(row[7].strip(),'%Y-%m-%d %H:%M:%S') # Time of observation (not currently used)
+        image=row[9].split('/')[-1].rstrip()+'.fits' # Image name
+        date=datetime.strptime(row[8].strip(),'%Y-%m-%d %H:%M:%S') # Time of observation (not currently used)
         freq=int((float(row[3].strip())/1e6) + 0.5) # Observation frequency, integer number in MHz
         if freq not in frequencies: # Keeping a record of which frequencies are in the dataset
             frequencies.append(freq)
         ellipticity=float(row[5])/float(row[6]) # Restoring beam ellipticity, Bmaj/Bmin
-        theoretical=float(row[2].split(' ')[8].split('(')[1].split(')')[0].strip()) # Theoretical noise limit
-        ratio=float(row[2].split(' ')[4].strip()) # Observed RMS / Theoretical noise (calculated by TraP)
-        rms=theoretical*ratio # Image RMS
-        pc = [float(row[1]), float(row[0])]
-         # Separation of image centre relative to A-Team sources
+        if "rms value" in row[2]:
+            theoretical=float(row[2].split(' ')[8].split('(')[1].split(')')[0].strip()) # Theoretical noise limit
+            ratio=float(row[2].split(' ')[4].strip()) # Observed RMS / Theoretical noise (calculated by TraP)
+        else:
+            theoretical=0.
+            ratio=0.
+            plt_ratios=False
+        rms=float(row[7]) # Image RMS
+        pc = [float(row[1]), float(row[0])]         # Separation of image centre relative to A-Team sources
         posdif_CasA=coords.angsep(CasA[0],CasA[1],pc[0],pc[1])/3600.
         posdif_CygA=coords.angsep(CygA[0],CygA[1],pc[0],pc[1])/3600.
         posdif_VirA=coords.angsep(VirA[0],VirA[1],pc[0],pc[1])/3600.
         # Input data into array: [RA, Dec, Obs date, Obs Freq, RMS noise, Theoretical noise, RMS/Theoretical, Restoring beam ellipticity, Seperation CasA, Seperation CygA, Seperation VirA, Image name, BMaj]
         image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,ellipticity,posdif_CasA,posdif_CygA,posdif_VirA,image,float(row[5])])
-    return image_info, frequencies
+    return image_info, frequencies, plt_ratios
 
 def fit_hist(data, sigma, xlabel, pltname, freq):
 # fit a Gaussian distribution to the input data, output a plot and threshold for a given sigma
@@ -99,10 +105,12 @@ def plothist(x, name,filename,sigma,freq,p):
     plsq = leastsq(res, p, args = (hist_x[0], range_x)) # fit Gaussian to data
     fit2 = plsq[0][2]*norm2(range_x, plsq[0][0], plsq[0][1]) # create Gaussian distribution for plotting on graph
     plt.plot(range_x,fit2, 'r-', linewidth=3)
-    sigcut=plsq[0][0]+plsq[0][1]*sigma # threshold defined as (mean + RMS * sigma)
+    sigcut=plsq[0][0]+plsq[0][1]*sigma # max threshold defined as (mean + RMS * sigma)
+    sigcut2=plsq[0][0]-plsq[0][1]*sigma # min threshold defined as (mean - RMS * sigma)
     plt.axvline(x=sigcut, linewidth=2, color='k',linestyle='--')
-    xvals=range(int(min(x)-1.),int(max(x)+1.))
-    xlabs=[r"$10^{"+str(a)+"}$" for a in xvals]
+    plt.axvline(x=sigcut2, linewidth=2, color='k', linestyle='--')
+    xvals=np.arange(int(min(range_x)),int(max(range_x)+1.5),1)
+    xlabs=[str(int(10.**a)) for a in xvals]
     plt.xticks(xvals,xlabs)
     plt.xlabel(name)
     plt.ylabel('Number of images')
