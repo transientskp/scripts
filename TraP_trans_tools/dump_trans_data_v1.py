@@ -18,24 +18,12 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
     #But for the data requested here it's much easier to use proper queries.
     transients_query = """\
     SELECT  tr.runcat
-           ,tr.band
-           ,tr.v_int
-           ,tr.eta_int
-           ,tr.siglevel
-           ,tr.transient_type
-           ,rc.wm_ra
-           ,rc.wm_decl
-    FROM transient tr
-         ,runningcatalog rc
-         ,runningcatalog_flux rf
-    WHERE tr.runcat = rc.id
-      AND rf.runcat = rc.id
-      AND tr.band = rf.band
-      AND rc.dataset = %s
+           ,tr.newsource_type
+    FROM newsource tr
     """
     cursor = tkp.db.execute(transients_query, (dataset_id,))
     transients = tkp.db.generic.get_db_rows_as_dicts(cursor)
-    print "Found", len(transients), "transients"
+    print "Found", len(transients), "new sources"
 
     sources_query = """\
     SELECT  im.taustart_ts
@@ -48,8 +36,9 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
             ,rc.wm_ra
             ,rc.wm_decl
             ,im.band
-            ,rf.avg_f_int
-            ,rf.avg_f_int_sq
+            ,ax.v_int
+            ,ax.eta_int
+            ,ax.f_datapoints
             ,im.freq_eff
     FROM extractedsource ex
          ,assocxtrsource ax

@@ -1,6 +1,7 @@
 from dump_trans_data_v1 import dump_trans
 import generic_tools
 import os
+import numpy as np
 
 def get_data(database, dataset_id, release, host, port, user, pword):
 #
@@ -35,24 +36,34 @@ def read_src_lc(sources):
 def collate_trans_data(new_source,frequencies,transients):
     trans_data=[]
     bands={}
+    transRuncat={x[1]:x[0] for x in transients}
     for freq in frequencies:
         for keys in new_source.keys():
             flux=[]
             flux_err=[]
             date=[]
             band=[]
+            tmp=0.
             for b in range(len(new_source[keys])):
                 if int((float(new_source[keys][b][6])/1e6)+0.5)==freq:
-                    band.append(new_source[keys][b][2])
+                    band.append(new_source[keys][b][0])
                     flux.append(float(new_source[keys][b][4]))
                     flux_err.append(float(new_source[keys][b][5]))
-            bands[freq]=band
-    ### Calculate the ratios...
-            avg_flux_ratio = [x/(sum(flux)/len(flux)) for x in flux]
-    ### Collate and store the transient parameters (these are across all the pipeline runs for the final figures)
-            for n in range(len(transients)):
-                if keys == transients[n][2] and transients[n][0] in bands[freq]:
-                    trans_data.append([keys, transients[n][1], float(transients[n][3]), float(transients[n][5]), max(flux), max(avg_flux_ratio),freq,len(flux),transients[n][-1], transients[n][-2], transients[n][4]])
+                    if tmp<float(new_source[keys][b][3]):
+                        eta=float(new_source[keys][b][2])
+                        V=float(new_source[keys][b][10])
+                        N=float(new_source[keys][b][3])
+                        tmp=N
+            if len(flux)!=0:
+                bands[freq]=band
+                ### Calculate the ratios...
+                avg_flux_ratio = [x/(sum(flux)/len(flux)) for x in flux]
+                ### Collate and store the transient parameters (these are across all the pipeline runs for the final figures)
+                if keys in transRuncat.keys():
+                    transType=transRuncat[keys]
+                else:
+                    transType=2
+                trans_data.append([keys, eta, V, max(flux), max(avg_flux_ratio), freq, len(flux), transType])
     print 'Number of transients in sample: '+str(len(trans_data))
     return trans_data
 
@@ -64,7 +75,7 @@ def format_data(database, dataset_id, release,host,port, user, pword):
     frequencies, new_source = read_src_lc(sources)
     trans_data = collate_trans_data(new_source,frequencies,transients)
     output3 = open('ds'+str(dataset_id)+'_trans_data.txt','w')
-    output3.write('#Runcat_id, eta_nu, signif, V_nu, flux, fluxrat, freq, dpts, RA, Dec, trans_type \n')
+    output3.write('#Runcat_id, eta_nu, V_nu, flux, fluxrat, freq, dpts, trans_type \n')
     for x in range(len(trans_data)):
         string='%s' % ','.join(str(val) for val in trans_data[x])
         output3.write(string+'\n')
