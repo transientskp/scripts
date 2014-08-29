@@ -8,8 +8,8 @@ import numpy as np
 from scipy import optimize
 import os
 
-if len(sys.argv) != 7:
-    print 'python train_TraP.py <precision threshold> <recall threshold> <lda> <anomaly> <logistic> <tests>'
+if len(sys.argv) != 8:
+    print 'python train_TraP.py <precision threshold> <recall threshold> <lda> <anomaly> <logistic> <trans> <tests>'
     exit()
 precis_thresh = float(sys.argv[1])
 recall_thresh = float(sys.argv[2])
@@ -23,6 +23,10 @@ if sys.argv[5] == 'T':
 else:
     logistic=False
 if sys.argv[6] == 'T':
+    transSrc=True
+else:
+    transSrc=False
+if sys.argv[7] == 'T':
     tests=True
 else:
     tests=False
@@ -181,3 +185,65 @@ if logistic:
     plotting_tools.create_scatter_hist(data5,0,0,paramx,paramy,range_x,range_y,'_LRresults',frequencies)
     # Create the diagnostic plot
     plotting_tools.create_diagnostic(data6,0,0,frequencies,'_LRresults')
+
+if transSrc:
+    print('Transient Search Tests')
+    possTrans = [x for x in full_data if x[10]=='0']
+    candTrans = [x for x in full_data if x[10]=='1']
+    frequencies = ["TN","TP","FN","FP"]
+    fp=0
+    tp=0
+    fn=0
+    for a in range(len(possTrans)):
+        if possTrans[a][-1] == "0":
+            possTrans[a].append('FP')
+            fp=fp+1
+        elif possTrans[a][-1] != "0":
+            possTrans[a].append('TP')
+            tp=tp+1
+    precision, recall = generic_tools.precision_and_recall(tp,fp,fn)
+    print "Possible Transients - Precision: "+str(precision)+", Recall: "+str(recall)
+    data=[[np.log10(float(possTrans[n][1])),np.log10(float(possTrans[n][3])),possTrans[n][-1],float(possTrans[n][-2])] for n in range(len(possTrans)) if float(possTrans[n][1])>0. if float(possTrans[n][3])>0.]
+    data2=[[float(possTrans[n][1]),float(possTrans[n][3]),float(possTrans[n][4]),float(possTrans[n][5]),possTrans[n][-1]] for n in range(len(possTrans))]
+    sigcutx,paramx,range_x = generic_tools.get_sigcut([a[0] for a in data],0)
+    sigcuty,paramy,range_y = generic_tools.get_sigcut([a[1] for a in data],0)
+    # Create the scatter_hist plot
+    plotting_tools.create_scatter_hist(data,0,0,paramx,paramy,range_x,range_y,'_possTransResults',frequencies)
+    # Create the diagnostic plot
+    plotting_tools.create_diagnostic(data2,0,0,frequencies,'_possTransResults')
+
+    fp=0
+    tp=0
+    fn=0
+    for a in range(len(candTrans)):
+        if candTrans[a][-1] == "0":
+            candTrans[a].append('FP')
+            fp=fp+1
+        elif candTrans[a][-1] != "0":
+            candTrans[a].append('TP')
+            tp=tp+1
+    for row in possTrans:
+        if row[-1]=='TP':
+            row[-1]='FN'
+            fn=fn+1
+            candTrans.append(row)
+        if row[-1]=='FP':
+            row[-1]='TN'
+            candTrans.append(row)
+    precision, recall = generic_tools.precision_and_recall(tp,fp,fn)
+    print "Candidate Transients - Precision: "+str(precision)+", Recall: "+str(recall)
+    data3=[[np.log10(float(candTrans[n][1])),np.log10(float(candTrans[n][3])),candTrans[n][-1],float(candTrans[n][-2])] for n in range(len(candTrans)) if float(candTrans[n][1])>0. if float(candTrans[n][3])>0.]
+    data4=[[float(candTrans[n][1]),float(candTrans[n][3]),float(candTrans[n][4]),float(candTrans[n][5]),candTrans[n][-1]] for n in range(len(candTrans))]
+    sigcutx,paramx,range_x = generic_tools.get_sigcut([a[0] for a in data3],0)
+    sigcuty,paramy,range_y = generic_tools.get_sigcut([a[1] for a in data3],0)
+    # Create the scatter_hist plot
+    plotting_tools.create_scatter_hist(data3,0,0,paramx,paramy,range_x,range_y,'_candTransResults',frequencies)
+    # Create the diagnostic plot
+    plotting_tools.create_diagnostic(data4,0,0,frequencies,'_candTransResults')
+
+    print "Candidate Transients:"
+    for row in candTrans:
+        if row[-1]=="FP":
+            print row
+
+

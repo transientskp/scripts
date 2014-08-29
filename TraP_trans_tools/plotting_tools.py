@@ -90,10 +90,10 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
     axHisty.axes.xaxis.set_ticklabels([])
     axHistx.set_xlim( axScatter.get_xlim() )
     axHisty.set_ylim( axScatter.get_ylim() )
-    xmin=-4
+    xmin=int(min([data[n][0] for n in range(len(data))])-1)
     xmax=int(max([data[n][0] for n in range(len(data))]))+1
-    ymin=-3
-    ymax=int(max([data[n][1] for n in range(len(data))])+1)
+    ymin=int(min([data[n][1] for n in range(len(data))])-1)
+    ymax=int(max([data[n][1] for n in range(len(data))]))+1
     xvals=range(xmin,xmax)
     xtxts=[r'$10^{'+str(a)+'}$' for a in xvals]
     yvals=range(ymin,ymax)
@@ -161,35 +161,28 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
         ax4.axhline(y=10.**sigcut_Vnu, linewidth=2, color='k', linestyle='--')
 
     # Plotting settings
-    xmin_ax3=int(np.log10(min([trans_data[x][2] for x in range(len(trans_data))]))-0.5)
-    xmax_ax3=int(np.log10(max([trans_data[x][2] for x in range(len(trans_data))]))+0.5)
+    
+    xmin_ax3=int(np.log10(min([trans_data[x][2] for x in range(len(trans_data))])))
+    xmax_ax3=int(np.log10(max([trans_data[x][2] for x in range(len(trans_data))])))
     #xmin_ax4=int(np.log10(min([trans_data[x][3] for x in range(len(trans_data))])))-0.5
 #    xmin_ax4=-0.05
 #    xmax_ax4=int(np.log10(max([trans_data[x][3] for x in range(len(trans_data))])))+0.3
     xmin_ax4=0.6
     xmax_ax4=max([trans_data[x][3] for x in range(len(trans_data))])+0.2
     #ymin_ax1=int(np.log10(min([trans_data[x][0] for x in range(len(trans_data))])))-0.5
-    ymin_ax1=-4
-    ymax_ax1=int(np.log10(max([trans_data[x][0] for x in range(len(trans_data))]))+1)
+    ymin_ax1=int(np.log10(min([trans_data[x][0] for x in range(len(trans_data)) if trans_data[x][0]!=0.])))
+    ymax_ax1=int(np.log10(max([trans_data[x][0] for x in range(len(trans_data))])))
     #ymin_ax3=int(np.log10(min([trans_data[x][1] for x in range(len(trans_data))])))-0.5
-    ymin_ax3=-3
-    ymax_ax3=int(np.log10(max([trans_data[x][1] for x in range(len(trans_data))]))+1)
-    xvals_ax3=range(int(xmin_ax3),int(xmax_ax3))
+    ymin_ax3=int(np.log10(min([trans_data[x][1] for x in range(len(trans_data)) if trans_data[x][1]!=0.])))
+    ymax_ax3=int(np.log10(max([trans_data[x][1] for x in range(len(trans_data))])))
+    xvals_ax3=range(int(xmin_ax3),int(xmax_ax3)+1)
     xtxts_ax3=[r'$10^{'+str(a)+'}$' for a in xvals_ax3]
 #    xvals_ax4=range(int(xmin_ax4),int(xmax_ax4))
 #    xtxts_ax4=[str(a) for a in xvals_ax4]
-    yvals_ax1=range(int(ymin_ax1),int(ymax_ax1-1))
+    yvals_ax1=range(int(ymin_ax1),int(ymax_ax1+1))
     ytxts_ax1=[r'$10^{'+str(a)+'}$' for a in yvals_ax1]
-    yvals_ax3=range(int(ymin_ax3),int(ymax_ax3-1))
+    yvals_ax3=range(int(ymin_ax3),int(ymax_ax3)+1)
     ytxts_ax3=[r'$10^{'+str(a)+'}$' for a in yvals_ax3]
-    ax3.set_xticks([10.**x for x in xvals_ax3])
-    ax3.set_xticklabels(xtxts_ax3)
-#    ax4.set_xticks(xvals_ax4)
-#    ax4.set_xticklabels(xtxts_ax4)
-    ax1.set_yticks([10.**y for y in yvals_ax1])
-    ax1.set_yticklabels(ytxts_ax1)
-    ax3.set_yticks([10.**y for y in yvals_ax3])
-    ax3.set_yticklabels(ytxts_ax3)
     ax1.set_yscale('log')
     ax1.set_xscale('log')
     ax2.set_yscale('log')
@@ -198,14 +191,22 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
     ax3.set_xscale('log')
     ax4.set_yscale('log')
 #    ax4.set_xscale('log')
-    ax1.set_ylim(10.**(ymin_ax1),10.**(ymax_ax1))
-    ax3.set_ylim(10.**(ymin_ax3),10.**(ymax_ax3))
-    ax3.set_xlim(10.**(xmin_ax3),10.**(xmax_ax3))
+    ax1.set_ylim(10.**(ymin_ax1-1),10.**(ymax_ax1+1))
+    ax3.set_ylim(10.**(ymin_ax3-1),10.**(ymax_ax3+1))
+    ax3.set_xlim(10.**(xmin_ax3-1),10.**(xmax_ax3+1))
     ax4.set_xlim(xmin_ax4,xmax_ax4)
+    ax3.set_xticks([10.**x for x in xvals_ax3])
+    ax1.set_yticks([10.**y for y in yvals_ax1])
+    ax3.set_yticks([10.**y for y in yvals_ax3])
     ax1.set_xlim( ax3.get_xlim() )
     ax4.set_ylim( ax3.get_ylim() )
     ax2.set_xlim( ax4.get_xlim() )
     ax2.set_ylim( ax1.get_ylim() )
+    ax3.set_xticklabels(xtxts_ax3)
+#    ax4.set_xticks(xvals_ax4)
+#    ax4.set_xticklabels(xtxts_ax4)
+    ax1.set_yticklabels(ytxts_ax1)
+    ax3.set_yticklabels(ytxts_ax3)
     ax1.xaxis.set_major_formatter(nullfmt)
     ax4.yaxis.set_major_formatter(nullfmt)
     ax2.xaxis.set_major_formatter(nullfmt)
