@@ -48,7 +48,7 @@ print simulations
 for sims in simulations:
 # General parameters...
     print 'Running: '+sims
-    database='antoniar'
+    database='antonia_sims'
     data='/scratch/antoniar/heastro-home/simulations/'+sims
 #    transient_position=C.Position('09:00:02.173 52:08:39.92')#.dd()
     trans_ra = 135.009054
@@ -81,14 +81,27 @@ for sims in simulations:
 #            vlss_data[sky]=read_skymodel(skymodels[sky])
             trans_params[sky]=[sky.split('to')[0],sky.split('to')[1]]
             dataset_id[sky]=run_TraP(sky,data,output_folder)
-            format_TraP_data.format_data('antoniar',dataset_id[sky],'p','heastrodb','5432','antoniar','antoniar')
+            format_TraP_data.format_data('antonia_sims', dataset_id[sky], 'p','vlo.science.uva.nl',5432, 'antoniar', 'sHjDGGVzezShPU5UvNyyY4Zz', 'T')
             trans_data=generic_tools.extract_data('ds'+str(dataset_id[sky])+'_trans_data.txt')
+            tmp=200.
             for line in trans_data:
-                if coords.angsep(float(line[8]),float(line[9]),trans_ra,trans_decl)<10.:
+                if coords.angsep(float(line[7]),float(line[8]),trans_ra,trans_decl)<tmp:
                     output.append(line)
+                    tmp=coords.angsep(float(line[7]),float(line[8]),trans_ra,trans_decl)
+
+                if keys in transRuncat.keys():
+                    transType=transRuncat[keys][0]
+                    min_sig=transRuncat[keys][1]
+                    max_sig=transRuncat[keys][2]
+                    detect_thresh=transRuncat[keys][3]
+                else:
+                    transType=2
+                    min_sig=0
+                    max_sig=0
+                    detect_thresh=0
             
     output3 = open('sim_'+sims+'_trans_data.txt','w')
-    output3.write('#Runcat_id, eta_nu, signif, V_nu, flux, fluxrat, freq, dpts, RA, Dec, trans_type \n')
+    output3.write('#Runcat_id, eta_nu, signif, V_nu, flux, fluxrat, freq, dpts, RA, Dec, trans_type, min_sig, max_sig, detect_thresh \n')
     for x in range(len(output)):
         string='%s' % ','.join(str(val) for val in output[x])
         output3.write(string+'\n')

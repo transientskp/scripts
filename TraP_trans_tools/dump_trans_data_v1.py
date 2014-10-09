@@ -12,15 +12,24 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
         database=dbname, user=user, password=pword,
         engine=engine, host=host, port=port
     )
-
+    
     #Note it is possible to query the database using the python routines 
     #in tkp.database.utils.generic, without any knowledge of SQL.
     #But for the data requested here it's much easier to use proper queries.
-    transients_query = """\
+    transients_query = """
     SELECT  tr.runcat
            ,tr.newsource_type
+           ,im.rms_min
+           ,im.rms_max
+           ,im.detection_thresh
+           ,ex.f_int
     FROM newsource tr
+         ,image im
+         ,extractedsource ex
+    WHERE tr.previous_limits_image = im.id
+      AND tr.trigger_xtrsrc = ex.id
     """
+    
     cursor = tkp.db.execute(transients_query, (dataset_id,))
     transients = tkp.db.generic.get_db_rows_as_dicts(cursor)
     print "Found", len(transients), "new sources"
@@ -31,6 +40,7 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
             ,ex.f_int
             ,ex.f_int_err
             ,ax.xtrsrc
+            ,ex.extract_type
             ,rc.id as runcatid
             ,rc.dataset
             ,rc.wm_ra
@@ -66,5 +76,6 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
 def dump_list_of_dicts_to_csv(data, outfile):
     if data:
         with open(outfile, 'w') as fout:
+#print sorted(data[0].keys())
             dw = csv.DictWriter(fout, fieldnames=sorted(data[0].keys()))
             dw.writerows(data)

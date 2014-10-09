@@ -14,20 +14,27 @@ def extract_data(filename):
 def get_frequencies(trans_data):
     frequencies=[]
     for lines in trans_data:
-        if lines[2] not in frequencies:
-            frequencies.append(lines[2])
+        if lines[3] not in frequencies:
+            frequencies.append(lines[3])
     return frequencies
 
 def get_sigcut(x,sigma):
+    # sigma clipping around median
     x=[float(i) for i in x]
+    #print 'test sigma clipping'
+    #medianVal = np.median(x)
+    #rms = np.sqrt(np.sum([(val-medianVal)**2. for val in x])/float(len(x)))
+    #print len(x), np.mean(x), np.std(x), medianVal, rms
+    #x=[a for a in x if a>(medianVal-3.*rms) if a<(medianVal+3.*rms)]
+    #print len(x), np.mean(x), np.std(x)
     param=norm.fit(x)
     range_x=np.linspace(min(x),max(x),1000)
     sigcut = param[1]*sigma+param[0]
     return sigcut,param,range_x
 
 def precision_and_recall(tp,fp,fn):
-    if (tp+fp)==0:
-        precision=1.
+    if tp==0:
+        precision=0.
     else:
         precision=float(tp)/float(tp+fp)
     if tp==0:
@@ -39,7 +46,7 @@ def precision_and_recall(tp,fp,fn):
 def label_data(data,label1,label2):
     # Label different arrays so that their transient type is known and they have a transient (1) or non-transient (0) label
     for x in data:
-        x[6]=label1
+        x[5]=label1
     data=np.matrix(data)
     data=np.c_[data,[label2]*len(data)]
     return data.tolist()

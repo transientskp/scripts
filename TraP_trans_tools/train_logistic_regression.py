@@ -88,6 +88,7 @@ def validation_curve(X, y, Xval, yval,options):
         theta_rec[i]=theta
         error_train[i]=check_error(X,y,theta)
         error_val[i]=check_error(Xval,yval,theta)
+        print theta
     min_err_val = min(error_val)
     for i in range(0,lambda_vec.shape[0]):
         if error_val[i] == min_err_val:
@@ -104,7 +105,7 @@ def plotLC(num, error_train, error_val, fname, xlog, ylog, xlabel):
         plt.xscale('log')
     plt.xlabel(xlabel)
     plt.ylabel('Error')
-    plt.axis([min(num)*0.8, max(num)*1.2, 1e-5,1e-0])
+    plt.axis([min(num)*0.8, max(num)*1.2, 1e-4,2e-2])
     plt.legend(['training', 'validation'], loc=4)
     plt.savefig('LR_'+fname+'_curve.png')
     plt.close()
@@ -121,16 +122,16 @@ def classify_data(X,y,theta):
     for i in range(predictions.shape[0]):
         if predictions[i] > 0.5 and y[i] == 1:
             tp=tp+1
-            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],'TP'])
+            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],1])
         elif predictions[i] > 0.5 and y[i] == 0:
             fp=fp+1
-            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],'FP'])
+            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],2])
         elif predictions[i] < 0.5 and y[i] == 1:
             fn=fn+1
-            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],'FN'])
+            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],3])
         elif predictions[i] < 0.5 and y[i] == 0:
             tn=tn+1
-            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],'TN'])
+            classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],4])
     return tp, fp, fn, tn, classified_data
 
 def predict(X,theta):
