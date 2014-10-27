@@ -5,7 +5,7 @@ import numpy as np
 
 def get_data(database, dataset_id, release, host, port, user, pword):
 #
-# Calls a function to dump the image data from the TraP database into a CSV file
+# Calls a function to dump the source data from the TraP database into a CSV file
 #
     if release == 'm':
         dump_trans(database,dataset_id, 'monetdb', host, port, user, pword)
