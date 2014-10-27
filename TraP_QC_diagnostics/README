@@ -1,4 +1,6 @@
-Usage: python TraP_QC_diagnostics.py <database> <dataset_id> <release> <sigma> <plt_freqs> <dataset_id2>
+Usage: python TraP_QC_diagnostics.py <database> <username> <password> <host> <port> <databaseType> <dataset_id> <sigma> <plt_freqs> <database_id2>
+
+Script updated for TraP Release 2 databases. If using TraP Release 1.1 please use older version.
 
 Requirements:
 gsm.py, os, glob, sys, numpy, datetime, math, matplotlib, tkp
@@ -7,15 +9,18 @@ Access to TraP databases via dump_image_data_v1.py
 
 Instructions:
 
-1. If you are NOT using heastro1, you will need to edit the script tools.py to give the correct path to your dataset in the function tools.get_data.
-2. Run TraP on your restored.corr images and force it to reject all images (in quality_check.parset set "high_bound=1"). Note the database you are using and the dataset_id.
-3. If you want to check the fluxes relative to the skymodel predictions, run TraP again, using appropriate quality control settings, to extract sources in all the images (n.b. you can also do your transient search at the same time). Note the second dataset_id.
-4. You are now ready to run this script. Go to ${your_working_folder} and run: 
-    python TraP_QC_diagnostics.py <database> <dataset_id> <release> <sigma> <plt_freqs> <dataset_id2>
+1. For finding automatic QC thresholds for LOFAR images, run TraP on your restored.corr images and force it to reject all images (in quality_check.parset set "high_bound=1"). Note the database you are using and the dataset_id. For non-LOFAR images, run TraP as normal and basic quality control plots will be made (minus the theoretical noise information).
+2. If you want to check the fluxes relative to the skymodel predictions, run TraP again, using appropriate quality control settings, to extract sources in all the images (n.b. you can also do your transient search at the same time). Note the second dataset_id.
+3. You are now ready to run this script. Go to ${your_working_folder} and run: 
+    python TraP_QC_diagnostics.py <database> <username> <password> <host> <port> <databaseType> <dataset_id> <sigma> <plt_freqs> <database_id2>
 
     <database>        : The name of the TraP database you are using
+    <username>	      : Your username for the database
+    <password>	      : The password for the database
+    <host>	      : The name of the machine hosting the databases
+    <port>	      : The port number for the machine, typically 5432 for postgresql and 52000 for monetdb
+    <databaseType>    : postgresql or monetdb
     <dataset_id>      : The dataset containing all the images rejected (i.e. step 2)
-    <release>	      : The release and database (e.g. 1m is release 1 monetdb and 1p is postgres)
     <sigma>	      : The sigma clipping to be used for the RMS highbound, 2 sigma is typically used for LOFAR data (when the distribution typically deviates from Gaussian)
     <plt_freqs>	      : T/F - the option to plot all QC plots for individual frequencies
     <dataset_id2>     : The dataset containing all the extracted sources for the images - if you do not have this yet (to get the QC settings for step 3) use N instead of a dataset ID.
@@ -24,4 +29,4 @@ Instructions:
    In the working folder, a number of png images are output which show an overview of your dataset.
    Note this script may take a significant amount of time to run if you are using the extracted sources (running gsm.py) - so I recommend running it in a screen.
 
-Feedback on this script is welcome, please e-mail: b.a.rowlinson@uva.nl
+Feedback on this script is welcome, please post comments and issues on github.

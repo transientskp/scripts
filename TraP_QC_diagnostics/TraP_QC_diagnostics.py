@@ -14,15 +14,19 @@ import os
 
 ###################### INITIAL SETUP STEPS ######################
 
-if len(sys.argv) != 7:
-    print 'python TraP_QC_diagnostics.py <database> <dataset_id> <release> <sigma> <plt_freqs> <database_id2>'
+if len(sys.argv) != 11:
+    print 'python TraP_QC_diagnostics.py <database> <username> <password> <host> <port> <databaseType> <dataset_id> <sigma> <plt_freqs> <database_id2>'
     exit()
 database = sys.argv[1]
-dataset_id = str(sys.argv[2])
-release = str(sys.argv[3])
-sigma = float(sys.argv[4])
-plt_freqs = sys.argv[5]
-dataset_id2 = str(sys.argv[6])
+username = sys.argv[2]
+password = sys.argv[3]
+host = sys.argv[4]
+port = sys.argv[5]
+databaseType = sys.argv[6]
+dataset_id = str(sys.argv[7])
+sigma = float(sys.argv[8])
+plt_freqs = sys.argv[9]
+dataset_id2 = str(sys.argv[10])
 # A-Team positions
 CasA=[350.866417,58.811778]
 CygA=[299.868153,40.733916]
@@ -33,26 +37,33 @@ min_sep=0. # The absolute minimum allowed separation from the A-Team source, set
 ###################### MAIN SCRIPT ######################
 
 # Extracting data from the TraP database into a text file
-tools.get_data(database, dataset_id, dataset_id2, release)
+if not os.path.exists('ds_'+dataset_id+'_images.csv'):
+    tools.get_data(database, username, password, host, port, databaseType, dataset_id, dataset_id2)
 
 # Extract relevant data from dataset text file
-image_info, frequencies = tools.extract_data(dataset_id, CasA, CygA, VirA)
+image_info, frequencies, plt_ratios = tools.extract_data(dataset_id, CasA, CygA, VirA)
 
 freq='all'
 # RMS noise properties
-noise_avg_log, noise_scatter_log, noise_threshold_log = tools.fit_hist([np.log10(image_info[n][4]) for n in range(len(image_info))], sigma, r'Observed RMS (Jy)', 'ds'+dataset_id+'_rms', freq)
+noise_avg_log, noise_scatter_log, noise_threshold_log = tools.fit_hist([np.log10(image_info[n][4]*1e3) for n in range(len(image_info))], sigma, r'Observed RMS (mJy)', 'ds'+dataset_id+'_rms', freq)
 noise_avg=10.**(noise_avg_log)
 noise_max=10.**(noise_avg_log+noise_scatter_log)-10.**(noise_avg_log)
 noise_min=10.**(noise_avg_log)-10.**(noise_avg_log-noise_scatter_log)
-print 'Average RMS Noise in images (1 sigma range, frequency='+str(freq)+' MHz): '+str(round(noise_avg*1e3,1))+' (+'+str(round(noise_max*1e3,1))+',-'+str(round(noise_min*1e3,1))+') mJy'
-# RMS/Theoretical limit for TraP
-ratio_avg_log, ratio_scatter_log, ratio_threshold_log = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info))], sigma, r'Observed RMS / Theoretical Noise', 'ds'+dataset_id+'_ratio', freq)
-ratio_avg=10.**(ratio_avg_log)
-ratio_threshold = round((10.**ratio_threshold_log),1)
-ratio_threshold2 = round((10.**((ratio_avg_log - ratio_threshold_log)+ratio_avg_log)),1)
-print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg,1))
-print '######## Recommended TraP high_bound threshold: '+str(ratio_threshold)
-print '######## Recommended TraP low_bound threshold: '+str(ratio_threshold2)
+print 'Average RMS Noise in images (1 sigma range, frequency='+str(freq)+' MHz): '+str(round(noise_avg,1))+' (+'+str(round(noise_max,1))+',-'+str(round(noise_min,1))+') mJy'
+if plt_ratios:
+    # RMS/Theoretical limit for TraP
+    ratio_avg_log, ratio_scatter_log, ratio_threshold_log = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info))], sigma, r'Observed RMS / Theoretical Noise', 'ds'+dataset_id+'_ratio', freq)
+    ratio_avg=10.**(ratio_avg_log)
+    ratio_threshold = round((10.**ratio_threshold_log),1)
+    ratio_threshold2 = round((10.**((ratio_avg_log - ratio_threshold_log)+ratio_avg_log)),1)
+    print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg,1))
+    print '######## Recommended TraP high_bound threshold: '+str(ratio_threshold)
+    print '######## Recommended TraP low_bound threshold: '+str(ratio_threshold2)
+    ratio_avg_log, ratio_scatter_log, ratio_threshold_log = tools.fit_hist([np.log10(image_info[n][-1]) for n in range(len(image_info))], sigma, r'Observed RMS / Confusion Noise', 'ds'+dataset_id+'_confratio', freq)
+
+else:
+    ratio_threshold=10000000.
+    ratio_threshold2=0.
 
 tools.plotfig_scatter(image_info, 7, 4, 'Ellipticity (Bmaj/Bmin)', 'RMS (Jy)', 'ds'+dataset_id+'_theoretical_ellipticity_'+str(freq)+'MHz')
 
@@ -64,10 +75,11 @@ if plt_freqs == 'T':
         noise_max_tmp=10.**(noise_avg_log_tmp+noise_scatter_log_tmp)-10.**(noise_avg_log_tmp)
         noise_min_tmp=10.**(noise_avg_log_tmp)-10.**(noise_avg_log_tmp-noise_scatter_log_tmp)
         print 'Average RMS Noise in images (1 sigma range, frequency='+str(freq)+' MHz): '+str(round(noise_avg_tmp*1e3,1))+' (+'+str(round(noise_max_tmp*1e3,1))+',-'+str(round(noise_min_tmp*1e3,1))+') mJy'
-        # RMS/Theoretical limit for TraP
-        ratio_avg_log_tmp, ratio_scatter_log_tmp, ratio_threshold_log_tmp = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info)) if image_info[n][3]==freq], sigma, r'Observed RMS / Theoretical Noise', 'ds'+dataset_id+'_ratio', freq)
-        ratio_avg_tmp=10.**(ratio_avg_log_tmp)
-        print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg_tmp,1))
+        if plt_ratios:
+            # RMS/Theoretical limit for TraP
+            ratio_avg_log_tmp, ratio_scatter_log_tmp, ratio_threshold_log_tmp = tools.fit_hist([np.log10(image_info[n][6]) for n in range(len(image_info)) if image_info[n][3]==freq], sigma, r'Observed RMS / Theoretical Noise', 'ds'+dataset_id+'_ratio', freq)
+            ratio_avg_tmp=10.**(ratio_avg_log_tmp)
+            print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg_tmp,1))
 
 # Calculate restoring beam threshold using a simple clipping using the average and rms scatter
 rms2=[image_info[x][7] for x in range(len(image_info))]
