@@ -11,33 +11,43 @@ from matplotlib.ticker import NullFormatter
 from matplotlib.font_manager import FontProperties
 
 def shuffle_datasets(data):
+    # shuffle the data into a random order
     shuffled=[]
     val_list=range(len(data))
     random.shuffle(val_list)
     for row in range(len(data)):
         shuffled.append(data[val_list[row]])
     shuffled=np.array(shuffled)
+    # returning the shuffled dataset
     return shuffled
 
 def create_datasets(data, n, m):
+    # split the data after shuffling
+    # n and m are the fraction of the data to be the training dataset and the validation dataset respectively
     shuffle_datasets(data)
     train=data[:n,:]
     valid=data[n:m,:]
     test=data[m:,:]
+    # return the training, validation and test datasets 
     return train, valid, test
 
 def create_X_y_arrays(data):
+    # split the data into the training data and their labels
     i=data.shape[1]-1
     X=np.matrix(data[:,:i])
     X = np.c_[np.ones(len(X)), X]
     y=np.matrix(data[:,i])
+    # return the training data and the classification labels
     return X, y
 
 def sigmoid(z):
+    # the sigmoid function used to predict the classification of a source
     g = 1/(1+np.exp(-z))
+    # return the predicted classification
     return g
 
 def reg_cost_func(theta, X, y, lda):
+    # the regularised cost function, J. This is minimalised to find the best classification solution.
     m=y.shape[1]
     J=0
     sig=sigmoid(X * np.c_[theta])
@@ -46,17 +56,22 @@ def reg_cost_func(theta, X, y, lda):
     temp[0]=0.0
     J=J+(lda/(2*m))*np.sum(np.multiply(temp,temp))
     Jnum=np.array(J)[0][0]
+    # return the value of the regularised cost function
     return Jnum
 
 def quadratic_features(X):
+    # the option to use a quadratic model instead of a simple linear model
     X_quad=np.matrix(np.zeros((X.shape[0],X.shape[1]*2)))
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
             X_quad[i,j]=X[i,j]
             X_quad[i,j+X.shape[1]]=X[i,j]**2
+    # return the model parameters with additional quadratic parameters
     return X_quad
 
 def learning_curve(X, y, Xval, yval, lda, options):
+    # Obtain the learning curve data
+    # train using 1 datapoint, 2 datapoints, 3 datapoints... n datapoints and monitor the classification error
     m=X.shape[0]
     n=Xval.shape[0]
     error_train=np.zeros((m))
@@ -67,13 +82,17 @@ def learning_curve(X, y, Xval, yval, lda, options):
         theta, cost, _, _, _ = optimize.fmin(lambda t: reg_cost_func(t,X[:i,:],y[:,:i],lda), initial_theta, **options)
         error_train[i]=check_error(X,y,theta)
         error_val[i]=check_error(Xval,yval,theta)
+    # return the training and validation errors for a given model
     return error_train, error_val, theta
 
 def check_error(X,y,theta):
+    # Calculate the classification error between the labelled data and the predictions
     error = (1./(2.*float(X.shape[0])))*np.sum(np.power((sigmoid(X * np.c_[theta])-y.T),2))
     return error
 
 def validation_curve(X, y, Xval, yval,options):
+    # Obtain the validation curve data
+    # train using different values of lamdba and monitor the classification error
     lambda_vec = np.array([10.**a for a in np.arange(-5,5,0.1)])
     error_train=np.zeros((lambda_vec.shape[0]))
     error_val=np.zeros((lambda_vec.shape[0]))
@@ -93,9 +112,11 @@ def validation_curve(X, y, Xval, yval,options):
     for i in range(0,lambda_vec.shape[0]):
         if error_val[i] == min_err_val:
             lda=lambda_vec[i]
+    #return the training and validation errors for given lambda values and the optimal lambda.
     return error_train, error_val, lambda_vec, lda
 
 def plotLC(num, error_train, error_val, fname, xlog, ylog, xlabel):
+    # Plot the learning curves
     plt.figure()
     plt.plot(num, error_train, 'b-')
     plt.plot(num, error_val, 'g-')
@@ -112,6 +133,7 @@ def plotLC(num, error_train, error_val, fname, xlog, ylog, xlabel):
     return
 
 def classify_data(X,y,theta):
+    # classify a given dataset X, using the input model theta and compare to the input labels y
     tp=0
     fp=0
     fn=0
@@ -132,8 +154,10 @@ def classify_data(X,y,theta):
         elif predictions[i] < 0.5 and y[i] == 0:
             tn=tn+1
             classified_data.append([X[i,1],X[i,2],X[i,3],X[i,4],4])
+    # return the true positives, false positives, false negatives, true negatives and the classified dataset
     return tp, fp, fn, tn, classified_data
 
 def predict(X,theta):
+    # predict the classification of a given dataset X using a given model theta
     predictions=sigmoid(X * np.c_[theta])
     return predictions

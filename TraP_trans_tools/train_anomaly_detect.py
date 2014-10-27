@@ -33,9 +33,6 @@ def trial_data(args):
     tp=len([z for z in range(len(xvals)) if (xvals[z]>sigcutx and yvals[z]>sigcuty)]) # True Positive
     fn=len([z for z in range(len(xvals)) if (xvals[z]<sigcutx or yvals[z]<sigcuty)]) # False Negative
 
-
-
-
     # Use these values to calculate the precision and recall values
     precision, recall = generic_tools.precision_and_recall(tp,fp,fn)
     print sigma1, sigma2, precision, recall
@@ -59,17 +56,6 @@ def multiple_trials(data):
 def tests(args):
     # Test multiple input precision and recall values to check out if we are meeting and exceeding the input parameters
     xi,yi,zi1,zi2, data, xvals, yvals, xstable, ystable, precis, recall = args
-
-# OLD METHOD!
-#    # find all the combinations from the matrix training data that exceed the required precision and recalls
-#    combinations=[[xi[a][b],yi[a][b],zi1[a][b],zi2[a][b]] for a in range(len(zi1)) for b in range(len(zi1[0])) if zi1[a][b]>precis if zi2[a][b]>recall]
-#    if len(combinations)==0: # If there are no combinations, then the test fails so automatically return precision = recall = 0 and the test failed
-#        return [precis, recall, 0, 0]
-#    # calculate the F-score of all the combinations that exceed the required precision and recalls
-#    temp = {str(a[0])+','+str(a[1]):(2*a[2]*a[3])/(a[2]+a[3]) for a in combinations}
-#    # find the sigmas that give the maximum F-score from the allowed combinations 
-#    above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
-#    above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
 
     # Find the combination of x and y which is closest to the two thresholds
     combinations=[[xi[a][b],yi[a][b],zi1[a][b],zi2[a][b]] for a in range(len(zi1)) for b in range(len(zi1[0])) if zi1[a][b]>=precis]
@@ -124,8 +110,6 @@ def check_method_works(xi,yi,zi1,zi2, data,above_thresh_sigma):
     test_data = np.genfromtxt('anomaly_test_data.txt')
     X = [x[0] for x in test_data] # input precision
     Y = [x[1] for x in test_data] # input recall
-#    Z1 = [x[2] if x[2]>=x[0] else 0 for x in test_data] # output precision
-#    Z2 = [x[3] if x[3]>=x[1] else 0 for x in test_data] # output recall
     Z1 = [(x[2]-x[0]) for x in test_data] # output precision
     Z2 = [(x[3]-x[1]) for x in test_data] # output precision
     
@@ -141,8 +125,7 @@ def check_method_works(xi,yi,zi1,zi2, data,above_thresh_sigma):
     ax2 = fig.add_subplot(212)
     cax = fig.add_axes([0.1, 0.95, 0.8, 0.03])
     fig.subplots_adjust(hspace = .001, wspace = 0.001)
-#    levels=np.arange(0.0,1.1,0.1)
-    levels=np.arange(-0.5,0.5,0.05)
+    levels=np.arange(-0.2,0.25,0.05)
     ax2.set_xlabel(r'Input Precision')
     ax1.set_ylabel(r'Input Recall')
     ax2.set_ylabel(r'Input Recall')
@@ -156,8 +139,8 @@ def check_method_works(xi,yi,zi1,zi2, data,above_thresh_sigma):
     ax2.set_xlim( ax1.get_xlim() )
     ax1.text(2.5, 3.5, 'Precision', bbox=dict(facecolor='white'))
     ax2.text(2.5, 3.5, 'Recall', bbox=dict(facecolor='white'))
-    CS1 = ax1.contourf(xi,yi,zi1,levels, cmap=plt.get_cmap('Blues'),alpha=1,extend='both')
-    CS2 = ax2.contourf(xi,yi,zi2,levels, cmap=plt.get_cmap('Blues'),alpha=1,extend='both')
+    CS1 = ax1.contourf(xi,yi,zi1,levels, cmap=plt.get_cmap('RdBu'),alpha=1,extend='both')
+    CS2 = ax2.contourf(xi,yi,zi2,levels, cmap=plt.get_cmap('RdBu'),alpha=1,extend='both')
     fig.colorbar(CS2, cax, orientation='horizontal')
     ax1.axvline(x=above_thresh_sigma[0], linewidth=2, color='k', linestyle='--')
     ax2.axvline(x=above_thresh_sigma[0], linewidth=2, color='k', linestyle='--')
@@ -182,15 +165,6 @@ def find_best_sigmas(precis_thresh,recall_thresh,data,tests, data2):
     combinations=[[xi[a][b],yi[a][b],zi1[a][b],zi2[a][b]] for a in range(len(zi1)) for b in range(len(zi1[0])) if zi1[a][b]>=precis_thresh]
     ID=np.array([((a[2]-precis_thresh)**2. + (a[3]-recall_thresh)**2.) for a in combinations]).argmin()
     above_thresh_sigma=combinations[ID]
-
-    
-    # Find all the combinations of x and y which are above the two thresholds - OLD METHOD 
-    #combinations=[[xi[a][b],yi[a][b],zi1[a][b],zi2[a][b]] for a in range(len(zi1)) for b in range(len(zi1[0])) if (zi1[a][b]>=precis_thresh and zi2[a][b]>=recall_thresh)]
-    # Calculate the F-score and find the combination with the highest F-Score 
-    #(this gives the best performance in both precision and recall of the options that are above the thresholds)
-    #temp = {str(a[0])+','+str(a[1]):(2*a[2]*a[3])/(a[2]+a[3]) for a in combinations}
-    #above_thresh_sigma=max(temp.iteritems(), key=operator.itemgetter(1))[0]
-    #above_thresh_sigma=[a for a in combinations if str(a[0])+','+str(a[1])==above_thresh_sigma][0]
 
     # Plot results
     # Settings

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Tools to query the database to extract the transient and extracted source tables. Files saved in working directory as "ds_${dataset id}_transients.csv" and "ds_${dataset id}_sources.csv
+Tools to query the database to extract the transient and running catalogue source tables. Files saved in working directory as "ds_${dataset id}_transients.csv" and "ds_${dataset id}_sources.csv
 """
 
 import tkp.config
@@ -12,10 +12,8 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
         database=dbname, user=user, password=pword,
         engine=engine, host=host, port=port
     )
-    
-    #Note it is possible to query the database using the python routines 
-    #in tkp.database.utils.generic, without any knowledge of SQL.
-    #But for the data requested here it's much easier to use proper queries.
+
+    # find all the new, candidate transient, sources detected by the pipeline
     transients_query = """
     SELECT  tr.runcat
            ,tr.newsource_type
@@ -34,6 +32,7 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
     transients = tkp.db.generic.get_db_rows_as_dicts(cursor)
     print "Found", len(transients), "new sources"
 
+    # extract the properties and variability parameters for all the running catalogue sources in the dataset
     sources_query = """\
     SELECT  im.taustart_ts
             ,im.tau_time
@@ -76,6 +75,5 @@ def dump_trans(dbname, dataset_id, engine, host, port, user, pword):
 def dump_list_of_dicts_to_csv(data, outfile):
     if data:
         with open(outfile, 'w') as fout:
-#print sorted(data[0].keys())
             dw = csv.DictWriter(fout, fieldnames=sorted(data[0].keys()))
             dw.writerows(data)

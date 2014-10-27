@@ -32,6 +32,7 @@ if sys.argv[7] == 'T':
 else:
     tests=False
 
+# sort the transient/variable datasets and the stable datasets into the format required for training.
 trans_data=generic_tools.extract_data('stable_trans_data.txt')
 stable_data = generic_tools.label_data(trans_data,'stable',0)
 files = glob.glob('sim_*_trans_data.txt')
@@ -45,7 +46,6 @@ variables = [x for x in full_data if x[-5]=='2']
 
 
 # Sort data into transient and non-transient
-#variable = [x for x in variables if float(x[-1]) != 0.  if float(x[1]) > 0. if float(x[2]) > 0.]
 variable = [[x[0],x[1],float(x[2])/1.6,x[3],x[4],x[5],x[6],x[7],x[8],x[9],x[10],x[11],x[12]] for x in variables if float(x[-1]) != 0.  if float(x[1]) > 0. if float(x[2]) > 0.]
 stable = [x for x in variables if float(x[-1]) == 0. if float(x[1]) > 0. if float(x[2]) > 0.]
 
@@ -76,13 +76,13 @@ if anomaly:
     frequencies = generic_tools.get_frequencies(data)
     
     # Create the scatter_hist plot
-    plotting_tools.create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,'',frequencies)
+    plotting_tools.create_scatter_hist(data,0,0,paramx,paramy,range_x,range_y,'',frequencies)
     
     # make second array for the diagnostic plot: [eta_nu, V_nu, maxflx_nu, flxrat_nu, nu]
     data2=[[variables[n][0],float(variables[n][1]),float(variables[n][2]),float(variables[n][3]),float(variables[n][4]),variables[n][5]] for n in range(len(variables)) if float(variables[n][1]) > 0 if float(variables[n][2]) > 0] 
     
     # Create the diagnostic plot
-    plotting_tools.create_diagnostic(data2,sigcutx,sigcuty,frequencies,'')
+    plotting_tools.create_diagnostic(data2,0,0,frequencies,'')
 
     # Setup data to make TP/FP/TN/FN plots
     # Create arrays containing the data to plot
@@ -113,6 +113,7 @@ if anomaly:
     plotting_tools.create_diagnostic(data4,sigcutx,sigcuty,frequencies,'_ADresults')
 
     
+    # sorting the candidate variables into a tidy format for outputting on screen and in a text file
     fpTMP={}
     for row in fp:
         if row[0] not in fpTMP.keys():
@@ -136,7 +137,7 @@ if logistic:
 ###### LOGISTIC REGRESSION #######
 
     # make data array for the algorithm: [eta_nu, V_nu, maxflx_nu, flxrat_nu, label]
-    # Note you can add in multiple parameters before the "label" column and the code should still work fine. (log of flxrat removed...)
+    # Note you can add in multiple parameters before the "label" column and the code should still work fine.
     data=np.matrix([[float(variables[n][0]),np.log10(float(variables[n][1])),np.log10(float(variables[n][2])),np.log10(float(variables[n][3])),float(variables[n][4]),float(variables[n][-1])] for n in range(len(variables)) if float(variables[n][1]) > 0 if float(variables[n][2]) > 0])
 
     # setting the options for the scipy optimise function
@@ -198,6 +199,7 @@ if logistic:
     print "Logistic Regression Model: "+str(theta)
     print "Precision: "+str(precision)+", Recall: "+str(recall)
 
+    # sorting the candidate variables into a tidy format for outputting on screen and in a text file
     output = open('LR_candidate_variables.txt','w')
     output.write('#Runcat_id, eta_nu, V_nu \n')
     print "candidate variables:"

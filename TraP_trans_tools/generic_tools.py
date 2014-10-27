@@ -2,6 +2,7 @@ from scipy.stats import norm
 import numpy as np
 
 def extract_data(filename):
+    # extract data in a csv file into a list
     info=[]
     data=open(filename,'r')
     for lines in data:
@@ -12,6 +13,7 @@ def extract_data(filename):
     return info
 
 def get_frequencies(trans_data):
+    # identify all the unique observing frequencies in the dataset
     frequencies=[]
     for lines in trans_data:
         if lines[3] not in frequencies:
@@ -19,20 +21,14 @@ def get_frequencies(trans_data):
     return frequencies
 
 def get_sigcut(x,sigma):
-    # sigma clipping around median
-    x=[float(i) for i in x]
-    #print 'test sigma clipping'
-    #medianVal = np.median(x)
-    #rms = np.sqrt(np.sum([(val-medianVal)**2. for val in x])/float(len(x)))
-    #print len(x), np.mean(x), np.std(x), medianVal, rms
-    #x=[a for a in x if a>(medianVal-3.*rms) if a<(medianVal+3.*rms)]
-    #print len(x), np.mean(x), np.std(x)
+    # identify the sigma cut for a given dataset fitted with a Gaussian distribuion
     param=norm.fit(x)
     range_x=np.linspace(min(x),max(x),1000)
     sigcut = param[1]*sigma+param[0]
-    return sigcut,param,range_x
+    return sigcut,param,range_x # return the sigma cut, the Gaussian model and the range fitted over
 
 def precision_and_recall(tp,fp,fn):
+    # calculate the precision and recall values
     if tp==0:
         precision=0.
     else:
@@ -44,7 +40,7 @@ def precision_and_recall(tp,fp,fn):
     return precision, recall
 
 def label_data(data,label1,label2):
-    # Label different arrays so that their transient type is known and they have a transient (1) or non-transient (0) label
+    # Label different arrays so that their transient type is known, label1, and they have a transient (1) or non-transient (0), label2
     for x in data:
         x[5]=label1
     data=np.matrix(data)
