@@ -52,17 +52,24 @@ def extract_data(dataset_id, CasA, CygA, VirA):
         if "rms value" in row[2]:
             theoretical=float(row[2].split(' ')[8].split('(')[1].split(')')[0].strip()) # Theoretical noise limit
             ratio=float(row[2].split(' ')[4].strip()) # Observed RMS / Theoretical noise (calculated by TraP)
+            # RMS/Confusion limit for TraP              
+            maxbl=6.
+            beam = 206265.*((300./float(freq))/(1000*maxbl))
+            confusion=29.0E-6*math.pow(beam,1.54)*math.pow((float(freq)/74.0),-0.7)
+            confusion_ratio=confusion/float(row[7])
         else:
             theoretical=0.
             ratio=0.
+            confusion=0.
+            confusion_ratio=0.
             plt_ratios=False
         rms=float(row[7]) # Image RMS
         pc = [float(row[1]), float(row[0])]         # Separation of image centre relative to A-Team sources
         posdif_CasA=coords.angsep(CasA[0],CasA[1],pc[0],pc[1])/3600.
         posdif_CygA=coords.angsep(CygA[0],CygA[1],pc[0],pc[1])/3600.
         posdif_VirA=coords.angsep(VirA[0],VirA[1],pc[0],pc[1])/3600.
-        # Input data into array: [RA, Dec, Obs date, Obs Freq, RMS noise, Theoretical noise, RMS/Theoretical, Restoring beam ellipticity, Seperation CasA, Seperation CygA, Seperation VirA, Image name, BMaj]
-        image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,ellipticity,posdif_CasA,posdif_CygA,posdif_VirA,image,float(row[5])])
+        # Input data into array: [RA, Dec, Obs date, Obs Freq, RMS noise, Theoretical noise, RMS/Theoretical, Restoring beam ellipticity, Seperation CasA, Seperation CygA, Seperation VirA, Image name, BMaj,confusion,confusion_ratio]
+        image_info.append([row[0],row[1],date,freq,rms,theoretical,ratio,ellipticity,posdif_CasA,posdif_CygA,posdif_VirA,image,float(row[5]),confusion,confusion_ratio])
     return image_info, frequencies, plt_ratios
 
 def fit_hist(data, sigma, xlabel, pltname, freq):
@@ -109,8 +116,9 @@ def plothist(x, name,filename,sigma,freq,p):
     sigcut2=plsq[0][0]-plsq[0][1]*sigma # min threshold defined as (mean - RMS * sigma)
     plt.axvline(x=sigcut, linewidth=2, color='k',linestyle='--')
     plt.axvline(x=sigcut2, linewidth=2, color='k', linestyle='--')
+    print min(range_x),max(range_x)
     xvals=np.arange(int(min(range_x)),int(max(range_x)+1.5),1)
-    xlabs=[str(int(10.**a)) for a in xvals]
+    xlabs=[str(10.**a) for a in xvals]
     plt.xticks(xvals,xlabs)
     plt.xlabel(name)
     plt.ylabel('Number of images')

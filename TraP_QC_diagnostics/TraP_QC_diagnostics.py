@@ -59,6 +59,8 @@ if plt_ratios:
     print 'Average RMS/Theoretical in images (frequency='+str(freq)+' MHz): '+str(round(ratio_avg,1))
     print '######## Recommended TraP high_bound threshold: '+str(ratio_threshold)
     print '######## Recommended TraP low_bound threshold: '+str(ratio_threshold2)
+    ratio_avg_log, ratio_scatter_log, ratio_threshold_log = tools.fit_hist([np.log10(image_info[n][-1]) for n in range(len(image_info))], sigma, r'Observed RMS / Confusion Noise', 'ds'+dataset_id+'_confratio', freq)
+
 else:
     ratio_threshold=10000000.
     ratio_threshold2=0.
