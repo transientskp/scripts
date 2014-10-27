@@ -9,6 +9,7 @@ pylab.rcParams['legend.loc'] = 'best'
 from matplotlib.ticker import NullFormatter
 from matplotlib.font_manager import FontProperties
 import generic_tools
+from astroML import density_estimation
 
 def make_colours(frequencies):
     # using a matplotlib colourmap, assign a different colour to each of the unique fields in the input list
@@ -25,6 +26,10 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
     if "TP" in frequencies:
         # if the data is classified, we ensure that the "frequencies" are correct
         frequencies = ["TN","TP","FN","FP"]
+    if "stable" in frequencies:
+        freq_labels= [name.replace("_", " ") for name in frequencies]
+    else:
+        freq_labels=frequencies
 
     # Setting up the plot
     nullfmt   = NullFormatter()         # no labels
@@ -51,7 +56,7 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
         if frequencies[i]=='stable':
             axScatter.scatter(xdata_var, ydata_var,color='0.75', s=10., zorder=1)
         else:
-            axScatter.scatter(xdata_var, ydata_var,color=col[i], s=10.)
+            axScatter.scatter(xdata_var, ydata_var,color=col[i], s=10., zorder=5)
     if 'stable' in frequencies or 'TN' in frequencies:
         x=[data[n][1] for n in range(len(data)) if (data[n][3]=='stable' or data[n][3]=='FP' or data[n][3]=='TN')]
         y=[data[n][2] for n in range(len(data)) if (data[n][3]=='stable' or data[n][3]=='FP' or data[n][3]=='TN')]
@@ -60,15 +65,15 @@ def create_scatter_hist(data,sigcutx,sigcuty,paramx,paramy,range_x,range_y,datas
         y=[data[n][2] for n in range(len(data))]
 
     # Plotting histograms with bayesian blocks binning
-    new_bins = generic_tools.bayesian_blocks(x)
+    new_bins = density_estimation.bayesian_blocks(x)
     binsx = [new_bins[a] for a in range(len(new_bins)-1) if abs((new_bins[a+1]-new_bins[a])/new_bins[a])>0.05]
     binsx = binsx + [new_bins[-1]]
-    new_bins = generic_tools.bayesian_blocks(y)
+    new_bins = density_estimation.bayesian_blocks(y)
     binsy = [new_bins[a] for a in range(len(new_bins)-1) if abs((new_bins[a+1]-new_bins[a])/new_bins[a])>0.05]
     binsy = binsy + [new_bins[-1]]
     axHistx.hist(x, bins=binsx, normed=1, histtype='stepfilled', color='b')
     axHisty.hist(y, bins=binsy, normed=1, histtype='stepfilled', orientation='horizontal', color='b')
-    axScatter.legend(frequencies,loc=4, prop=fontP)
+    axScatter.legend(freq_labels,loc=4, prop=fontP)
 
     # Plotting lines representing thresholds (unless no thresholds)
     if sigcutx != 0 or sigcuty != 0:
@@ -125,6 +130,10 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
     print('plotting figure: diagnostic plots')
     if "TP" in frequencies:
         frequencies = ["TN","TP","FN","FP"]
+    if "stable" in frequencies:
+        freq_labels= [name.replace("_", " ") for name in frequencies]
+    else:
+        freq_labels=frequencies
 
     # Setting up the plot
     nullfmt   = NullFormatter()         # no labels
@@ -154,11 +163,11 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
             ax3.scatter(xdata_ax3, ydata_ax3,color='0.75', s=10., zorder=1)
             ax4.scatter(xdata_ax4, ydata_ax3,color='0.75', s=10., zorder=1)
         else:
-            ax1.scatter(xdata_ax3, ydata_ax1,color=col[i], s=10.)
-            ax2.scatter(xdata_ax4, ydata_ax1,color=col[i], s=10.)
-            ax3.scatter(xdata_ax3, ydata_ax3,color=col[i], s=10.)
-            ax4.scatter(xdata_ax4, ydata_ax3,color=col[i], s=10.)
-    ax4.legend(frequencies, loc=4, prop=fontP)
+            ax1.scatter(xdata_ax3, ydata_ax1,color=col[i], s=10., zorder=5)
+            ax2.scatter(xdata_ax4, ydata_ax1,color=col[i], s=10., zorder=6)
+            ax3.scatter(xdata_ax3, ydata_ax3,color=col[i], s=10., zorder=7)
+            ax4.scatter(xdata_ax4, ydata_ax3,color=col[i], s=10., zorder=8)
+    ax4.legend(freq_labels, loc=4, prop=fontP)
 
     # Plotting lines representing thresholds (unless no thresholds)
     if sigcut_etanu != 0 or sigcut_Vnu != 0:
@@ -171,7 +180,7 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
     xmin_ax3=int(np.log10(min([trans_data[x][3] for x in range(len(trans_data))])))
     xmax_ax3=int(np.log10(max([trans_data[x][3] for x in range(len(trans_data))])))
     xmin_ax4=0.8
-    xmax_ax4=max([trans_data[x][4] for x in range(len(trans_data))])+0.2
+    xmax_ax4=max([trans_data[x][4] for x in range(len(trans_data))])
     ymin_ax1=int(np.log10(min([trans_data[x][1] for x in range(len(trans_data)) if trans_data[x][1]>0.])))
     ymax_ax1=int(np.log10(max([trans_data[x][1] for x in range(len(trans_data))])))
     ymin_ax3=int(np.log10(min([trans_data[x][2] for x in range(len(trans_data)) if trans_data[x][2]>0.])))
@@ -194,10 +203,10 @@ def create_diagnostic(trans_data,sigcut_etanu,sigcut_Vnu,frequencies,dataset_id)
     ax3.set_xscale('log')
     ax4.set_yscale('log')
     ax4.set_xscale('log')
-    ax1.set_ylim(10.**(ymin_ax1-0.5),10.**(ymax_ax1+0.5))
-    ax3.set_ylim(10.**(ymin_ax3-0.5),10.**(ymax_ax3+0.5))
+    ax1.set_ylim(10.**(ymin_ax1-0.5),10.**(ymax_ax1+1.))
+    ax3.set_ylim(10.**(ymin_ax3-0.5),10.**(ymax_ax3+1.))
     ax3.set_xlim(10.**(xmin_ax3-1),10.**(xmax_ax3+1))
-    ax4.set_xlim(10.**(xmin_ax4-0.1),10.**(xmax_ax4+0.3))
+    ax4.set_xlim(10.**(xmin_ax4-0.1),10.**(xmax_ax4+1.))
     ax3.set_xticks([10.**x for x in xvals_ax3])
     ax1.set_yticks([10.**y for y in yvals_ax1])
     ax3.set_yticks([10.**y for y in yvals_ax3])

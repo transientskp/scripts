@@ -33,6 +33,21 @@ Contents
 `examples <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples>`_
     A folder containing example training data for train_TraP.py.
 
+Requirements
+------------
+
+- tkp (The LOFAR Transients Pipeline, TraP)
+- numpy
+- scikit-learn
+- astroML
+- os
+- pylab
+- csv
+- scipy
+- math
+- matplotlib
+- random
+
 dump_trans_data_v1.py
 ---------------------
 *Requirements:* tkp (TraP installed and initiated), csv
@@ -129,7 +144,7 @@ generic_tools.py
 
 plotting_tools.py
 -----------------
-*Requirements:* numpy, scipy, matplotlib, math, pylab
+*Requirements:* numpy, scipy, matplotlib, math, pylab, astroML
 
 - **make_colours**
 
@@ -217,7 +232,7 @@ train_anomaly_detect.py
 
   *Inputs:*  list containing x sigma data,y sigma data, precisions, recalls, training data, above threshold sigma
 
-  *Info:* Runs the test function multiple times for a wide range of input precisions and recalls. Plots a figure to show the performance. See `example <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples/sim_check_precisions_and_recalls.png>'_
+  *Info:* Runs the test function multiple times for a wide range of input precisions and recalls. Plots a figure to show the performance.
 
 - **find_best_sigmas**
 
@@ -308,7 +323,13 @@ train_logistic_regression.py
 
   *Inputs:* error_train, error_val, fname, xlog (True/False), ylog (True/False), xlabel
 
-  *Info:* A plotting algorthm used to create figures showing the training and validation errors. Here is an `example <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples/machine_learning_curve_learning.png>`_ 
+  *Info:* A plotting algorthm used to create figures showing the
+  training and validation errors. Here are example `learning
+  <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples/LR_learning_curve.png>`_
+  ,  `repeat
+  <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples/LR_repeat_curve.png>`_
+   and  `validation
+   <https://github.com/transientskp/scripts/tree/master/TraP_trans_tools/examples/LR_validation_curve.png>`_  curves
 
 - **classify_data**
 

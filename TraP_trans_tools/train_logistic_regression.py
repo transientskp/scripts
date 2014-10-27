@@ -72,6 +72,7 @@ def quadratic_features(X):
 def learning_curve(X, y, Xval, yval, lda, options):
     # Obtain the learning curve data
     # train using 1 datapoint, 2 datapoints, 3 datapoints... n datapoints and monitor the classification error
+    
     m=X.shape[0]
     n=Xval.shape[0]
     error_train=np.zeros((m))
@@ -117,17 +118,17 @@ def validation_curve(X, y, Xval, yval,options):
 
 def plotLC(num, error_train, error_val, fname, xlog, ylog, xlabel):
     # Plot the learning curves
-    plt.figure()
+    plt.figure(1,figsize=(12,10))
     plt.plot(num, error_train, 'b-')
     plt.plot(num, error_val, 'g-')
     if ylog:
         plt.yscale('log')
     if xlog:
         plt.xscale('log')
-    plt.xlabel(xlabel)
-    plt.ylabel('Error')
+    plt.xlabel(xlabel, fontsize=28)
+    plt.ylabel('Error', fontsize=28)
     plt.axis([min(num)*0.8, max(num)*1.2, 1e-4,2e-2])
-    plt.legend(['training', 'validation'], loc=4)
+    plt.legend(['training', 'validation'], loc=4, fontsize=28)
     plt.savefig('LR_'+fname+'_curve.png')
     plt.close()
     return
