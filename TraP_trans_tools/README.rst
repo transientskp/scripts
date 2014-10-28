@@ -3,6 +3,11 @@ TraP_trans_tools Script Archive
 
 This folder contains the files required to analyse the transient parameters for a large number of sources. The tools developed are not TraP specific, however there are executable scripts demonstrating how to use these scripts with outputs from TraP databases (process_TraP.py and train_TraP.py). The techniques implemented in these scripts and how to interpret the outputs are described in Rowlinson et al. (In Prep).
 
+Acknowledgements
+----------------
+
+This work utilises a number of {\sc Python} libraries, including the Matplotlib plotting libraries Hunter (2007, Computing in Science & Engineering, 9, 90-95) and astroML (Vanderplas et al., 2012, in Conference on Intelligent Data Understanding, 47–54). Finally, the authors acknowledge training in machine learning strategies received from the Stanford Machine Learning course available on Coursera (https://www.coursera.org/course/ml).
+
 Contents
 --------
 
