@@ -44,7 +44,7 @@ def extract_data(dataset_id, CasA, CygA, VirA):
     for lines in list_img: # Loop through all the images
         row=lines.split(',')
         image=row[9].split('/')[-1].rstrip()+'.fits' # Image name
-        date=datetime.strptime(row[8].strip(),'%Y-%m-%d %H:%M:%S') # Time of observation (not currently used)
+        date=datetime.strptime(row[8].strip().split(".")[0],'%Y-%m-%d %H:%M:%S') # Time of observation (not currently used)
         freq=int((float(row[3].strip())/1e6) + 0.5) # Observation frequency, integer number in MHz
         if freq not in frequencies: # Keeping a record of which frequencies are in the dataset
             frequencies.append(freq)
