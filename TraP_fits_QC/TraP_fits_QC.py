@@ -35,7 +35,7 @@ if allFreqs=='T':
         noise_max=10.**(noise_avg_log+noise_scatter_log)-10.**(noise_avg_log)
         noise_min=10.**(noise_avg_log)-10.**(noise_avg_log-noise_scatter_log)
         print 'Average RMS Noise in images (1 sigma range, frequency='+str(frequency)+' MHz): '+str(frequency)+' MHz): '+str(noise_avg)+' (+'+str(noise_max)+',-'+str(noise_min)+') mJy'
-        thresholds.append([frequency,noise_max*sigma,noise_min*sigma])
+        thresholds[frequency]=[noise_avg,noise_max*sigmaRej,noise_min*sigmaRej*-1.]
 
 frequency='all'
 TMPdata = np.array([np.log10(n[2]) for n in imageData])
